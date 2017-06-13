@@ -34,8 +34,10 @@ HANNFInitWithOptionFile(HANNF* hannf, const char* filepath)
     HANNFUtilOptionsGetInt(hannf, "-HANNFDebug", &hannf->debug);
     // init net, map, train, ...
     HANNFNetInit(hannf);
-    HANNFMapInit(hannf);
-    HANNFTrainInit(hannf);
+//    HANNFMapInit(hannf);
+//    HANNFTrainInit(hannf);
+    // wait for all processors
+    PetscBarrier(PETSC_NULL);
     // debug
     HANNFDebug(hannf, FSSS, "HANNFInitWithOptionFile", "filepath:", filepath);
     PetscFunctionReturn(0);

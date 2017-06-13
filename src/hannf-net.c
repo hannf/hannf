@@ -135,31 +135,26 @@ HANNFNetLoadInit(HANNF* hannf)
 PetscErrorCode
 HANNFNetInit(HANNF* hannf)
 {
-//    MPI_Comm comm = hannf->comm;
     PetscFunctionBegin;
-    
-    // network type
     char annType[PETSC_MAX_PATH_LEN];
+    // get network type
     HANNFUtilOptionsGetString(hannf, "-HANNFType", annType);
     if (strcmp(annType, HANNF_TYPE_MLP) == 0) {
-        //
-        //  HANNF_TYPE_MLP, "mlp", multi layer perceptron
-        //
-        PetscInt nmax;
         
+        // HANNF_TYPE_MLP, "mlp", multi layer perceptron
+        PetscInt nmax, i;
         // store type
         hannf->type = HANNF_TYPE_MLP;
-        
         // input layer size
         // output layer size
-        // hidden layer size(s)
+        // hidden layer count
+        // hidden layer(s) size(s)
         HANNFUtilOptionsGetInt(hannf, "-HANNFInputNeuronCount", &hannf->nin);
         HANNFUtilOptionsGetInt(hannf, "-HANNFOutputNeuronCount", &hannf->nout);
         HANNFUtilOptionsGetInt(hannf, "-HANNFHiddenLayerCount", &hannf->nh);
         nmax = hannf->nh;
-        PetscMalloc(nmax*sizeof(PetscInt), &hannf->nhi);
+        PetscMalloc(nmax * sizeof(PetscInt), &hannf->nhi);
         HANNFUtilOptionsGetIntArray(hannf, "-HANNFHiddenLayerNeuronCount", &nmax, hannf->nhi);
-        
         // init load distribution
         HANNFNetLoadInit(hannf);
 
@@ -169,10 +164,8 @@ HANNFNetInit(HANNF* hannf)
         sprintf(message, "Unknown HANNF type '%s'.", annType);
         HANNFFlag(PETSC_FALSE, message);
     }
-
     // debug
     HANNFDebug(hannf, "HANNFNetInit\n");
-
     PetscFunctionReturn(0);
 }
 
@@ -182,7 +175,6 @@ PetscErrorCode
 HANNFNetFinal(HANNF* hannf)
 {
     PetscFunctionBegin;
-
     if (strcmp(hannf->type, HANNF_TYPE_MLP) == 0) {
         // final load distribution
         // free hidden layer neuron count
@@ -194,10 +186,8 @@ HANNFNetFinal(HANNF* hannf)
         sprintf(message, "Unknown HANNF type '%s'.", hannf->type);
         HANNFFlag(PETSC_FALSE, message);
     }
-    
     // debug
     HANNFDebug(hannf, "HANNFNetFinal\n");
-
     PetscFunctionReturn(0);
 }
 

@@ -42,8 +42,8 @@ typedef struct {
     PetscLogDouble  timeStamp;      // timing delta
     // network
     HANNFType       type;           // network type
-    PetscInt        nin;            // input neuron count
-    PetscInt        nout;           // output neuron count
+    PetscInt        nin;            // neuron count input layer
+    PetscInt        nout;           // neuron count output layer
     PetscInt        nh;             // hidden layer count
     PetscInt        *nhi;           // neuron count per hidden layer
     // mapping

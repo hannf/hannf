@@ -18,9 +18,8 @@
 
 #include "hannf-main-train.h"
 
-//
-//  main
-//
+#undef  __FUNCT__
+#define __FUNCT__ "main"
 int
 main(int argc, char **args)
 {
@@ -36,8 +35,8 @@ main(int argc, char **args)
         HANNF hannf;
         PetscTime(&hannf.startTime);
         HANNFInitWithOptionFile(&hannf, args[1]);
-        HANNFTrain(&hannf);
-        HANNFFinal(&hannf);
+//        HANNFTrain(&hannf);
+//        HANNFFinal(&hannf);
     
     } else {
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR:\n");
