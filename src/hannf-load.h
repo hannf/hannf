@@ -21,12 +21,7 @@
 
 #include "hannf-net.h"
 
-//extern PetscErrorCode HANNFNetInit(HANNF*);
-//extern PetscErrorCode HANNFNetLoadInit(HANNF*);
-//extern PetscErrorCode HANNFNetCreate(HANNF*);
-//extern PetscErrorCode HANNFNetDestroy(HANNF*);
-
-//extern PetscErrorCode HANNFNetFinal(HANNF*);
-//extern PetscErrorCode HANNFNetLoadFinal(HANNF*);
+extern PetscErrorCode HANNFLoadInit(HANNF*);
+extern PetscErrorCode HANNFLoadFinal(HANNF*);
 
 #endif /* HANNF_LOAD_H */

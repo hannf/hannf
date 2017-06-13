@@ -34,6 +34,7 @@ HANNFInitWithOptionFile(HANNF* hannf, const char* filepath)
     HANNFUtilOptionsGetInt(hannf, "-HANNFDebug", &hannf->debug);
     // init net, map, train, ...
     HANNFNetInit(hannf);
+//    HANNFLoadInit(hannf);
 //    HANNFMapInit(hannf);
 //    HANNFTrainInit(hannf);
     // wait for all processors
@@ -54,6 +55,7 @@ HANNFFinal(HANNF* hannf)
     // final ..., train, map, net
     HANNFTrainFinal(hannf);
     HANNFMapFinal(hannf);
+    HANNFLoadFinal(hannf);
     HANNFNetFinal(hannf);
     // debug
     HANNFDebug(hannf, "HANNFFinal\n");
