@@ -36,7 +36,7 @@ typedef struct {
     MPI_Comm        comm;           // mpi context
     PetscInt        nproc;          // global process count
     PetscInt        myproc;         // local process count
-    // debug
+    // debug/timing
     PetscInt        debug;          // debug switch
     PetscLogDouble  startTime;      // overall duration
     PetscLogDouble  timeStamp;      // timing delta
@@ -46,35 +46,53 @@ typedef struct {
     PetscInt        nout;           // neuron count output layer
     PetscInt        nh;             // hidden layer count
     PetscInt        *nhi;           // neuron count per hidden layer
+    // load
+    PetscInt        *nrow_global;   // global row count per network layer
+    PetscInt        *nrow_local;    // local row count per network layer
+    PetscInt        *ncol;          // column count per network layer (matrix plus vector)
+    PetscInt        nmem_global;    // global length of storage vector
+    PetscInt        nmem_local;     // local length of storage vector
     // mapping
-    Vec             xx;             // memory/storage vector
-    Mat             *W;             // matrices to optimize (n+1)
-    Vec             *b;             // vectors to optimize (n+1)
-    Vec             *s;             // hidden layer net input vector
-    Vec             *h;             // hidden layer vector
+    Mat             *W;             // network matrices (n+1)
+    Vec             *b;             // network vectors (n+1)
+    Vec             *s;             // hidden layer, network input vector
+    Vec             *h;             // hidden layer, activated vector
+    Vec             *w;             // work vectors per layer
     VecScatter      *h_scatter;     // scatter context for h_all
     Vec             *h_all;         // hidden layer vector, scattered to all
+    // derivatives
+    Vec             *dW;            // derivatives with respect to a W matrix, columnwise
+    Vec             *db;            // derivatives with respect to a b vector
     Vec             *dh;
-    Vec             *w;             // work vectors per layer
-//    Vec             y;              // output/result vector
+    Vec             mem;            // storage vector
     // training
     PetscInt        nt;             // training data count (or sequence length)
     Vec             *X;             // input
     Vec             *Y;             // output
     Tao             tao;            // optimization context
     Vec             x;              // initial/result vector
-    Vec             *dW;            // derivatives with respect to a W matrix, columnwise
-    Vec             *db;            // derivatives with respect to a b vector
     // work
     Mat             XX;             // input work matrix
     Mat             YY;             // output work matrix
-    PetscInt        *nrow_global;   // global row count per network layer
-    PetscInt        *nrow_local;    // local row count per network layer
-    PetscInt        *ncol;          // column count per network layer (matrix plus vector)
-    PetscInt        nvec_global;    // global length of intial/result vector
-    PetscInt        nvec_local;     // local length of intial/result vector
 } HANNF;
 
 #endif /* HANNF_TYPE_H */
 
+//// derivatives
+//// weight matrices, columnwise only
+//// bias vectors
+//// activation
+//PetscMalloc(nmax * sizeof(Vec), &hannf->dW);
+//PetscMalloc(nmax * sizeof(Vec), &hannf->db);
+//PetscMalloc(nmax * sizeof(Vec), &hannf->dh);
+//// scatter of intermediate results
+//// contexts
+//// vectors, same copy for each process
+//PetscMalloc(nmax * sizeof(VecScatter), &hannf->h_scatter);
+//PetscMalloc(nmax * sizeof(Vec), &hannf->h_all);
+//// create storage vector
+//// use computed sizes (HANNFLoadInit)
+//// set to random values
+//VecCreate(hannf->comm, &hannf->mem);
 
+//    Vec             y;              // output/result vector

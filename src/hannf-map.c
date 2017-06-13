@@ -25,23 +25,24 @@ HANNFMapFinal(HANNF* hannf)
 {
     PetscFunctionBegin;
     // destroy net matrices and vectors
+    // forward
     MatDestroyMatrices(hannf->nh+1, &hannf->W);
-    VecDestroyVecs(hannf->nh+1, &hannf->dW);    // columnwise
     VecDestroyVecs(hannf->nh+1, &hannf->b);
-    VecDestroyVecs(hannf->nh+1, &hannf->db);
     VecDestroyVecs(hannf->nh+1, &hannf->s);
     VecDestroyVecs(hannf->nh+1, &hannf->h);
-    
+    VecDestroyVecs(hannf->nh+1, &hannf->w);
+    // scatter
     for (int i = 0; i < hannf->nh+1; i++) {
         VecScatterDestroy(&hannf->h_scatter[i]);
     }
     PetscFree(hannf->h_scatter);
-    
     VecDestroyVecs(hannf->nh+1, &hannf->h_all);
+    // derivatives
+    VecDestroyVecs(hannf->nh+1, &hannf->dW);
+    VecDestroyVecs(hannf->nh+1, &hannf->db);
     VecDestroyVecs(hannf->nh+1, &hannf->dh);
-    VecDestroyVecs(hannf->nh+1, &hannf->w);
     // destroy storage/work vector
-    VecDestroy(&hannf->xx);
+    VecDestroy(&hannf->mem);
     // debug
     HANNFDebug(hannf, "HANNFMapFinal\n");
     PetscFunctionReturn(0);
@@ -55,34 +56,48 @@ HANNFMapInit(HANNF* hannf)
     PetscFunctionBegin;
     // work vars
     PetscInt nmax, i;
-    // allocate memory for data types, one more than hidden layers
+    PetscScalar *memarray;
+    PetscInt memidx = 0;
+    // allocate memory for objects used during mapping ...
+    // ... and for the computation of derivatives
+    // one more than hidden layers
     nmax = hannf->nh + 1;
-    PetscMalloc(nmax*sizeof(Mat), &hannf->W);
-    PetscMalloc(nmax*sizeof(Vec), &hannf->dW); // columnwise
-    PetscMalloc(nmax*sizeof(Vec), &hannf->b);
-    PetscMalloc(nmax*sizeof(Vec), &hannf->db);
-    PetscMalloc(nmax*sizeof(Vec), &hannf->s);
-    PetscMalloc(nmax*sizeof(Vec), &hannf->h);
-    
-    PetscMalloc(nmax*sizeof(VecScatter), &hannf->h_scatter);
-    
-    PetscMalloc(nmax*sizeof(Vec), &hannf->h_all);
-    PetscMalloc(nmax*sizeof(Vec), &hannf->dh);
-    PetscMalloc(nmax*sizeof(Vec), &hannf->w);
-    // create memory/stprage/work vector
-    VecCreate(hannf->comm, &hannf->xx);
-    VecSetType(hannf->xx, VECSTANDARD);
-    // use computed sizes (HANNFNetLoadInit)
+    // weight matrices
+    // bias vectors
+    PetscMalloc(nmax * sizeof(Mat), &hannf->W);
+    PetscMalloc(nmax * sizeof(Vec), &hannf->b);
+    // state vectors
+    // s, input from network
+    // h, after activation
+    PetscMalloc(nmax * sizeof(Vec), &hannf->s);
+    PetscMalloc(nmax * sizeof(Vec), &hannf->h);
+    // work vectors
+    PetscMalloc(nmax * sizeof(Vec), &hannf->w);
+    // scatter of intermediate results
+    // needed for the computation of derivatives
+    // contexts
+    // vectors, same copy for each process
+    PetscMalloc(nmax * sizeof(VecScatter), &hannf->h_scatter);
+    PetscMalloc(nmax * sizeof(Vec), &hannf->h_all);
+    // derivatives
+    // weight matrices, columnwise only
+    // bias vectors
+    // activation
+    PetscMalloc(nmax * sizeof(Vec), &hannf->dW);
+    PetscMalloc(nmax * sizeof(Vec), &hannf->db);
+    PetscMalloc(nmax * sizeof(Vec), &hannf->dh);
+    // create storage vector
+    // use computed sizes (HANNFLoadInit)
     // set to random values
-    VecSetSizes(hannf->xx, hannf->nvec_local, hannf->nvec_global);
-    VecSetRandom(hannf->xx, PETSC_NULL);
-    VecAssemblyBegin(hannf->xx);
-    VecAssemblyEnd(hannf->xx);
-    // get array from xx vector
+    VecCreate(hannf->comm, &hannf->mem);
+    VecSetType(hannf->mem, VECSTANDARD);
+    VecSetSizes(hannf->mem, hannf->nmem_local, hannf->nmem_global);
+    VecSetRandom(hannf->mem, PETSC_NULL);
+    VecAssemblyBegin(hannf->mem);
+    VecAssemblyEnd(hannf->mem);
+    // get array from mem vector
     // use for matrices Wi and vectors bi
-    PetscScalar *xarray;
-    PetscInt xarridx = 0;
-    VecGetArray(hannf->xx, &xarray);
+    VecGetArray(hannf->mem, &memarray);
     // loop over layers
     for(i = 0; i < hannf->nh+1; i++)
     {
@@ -90,36 +105,40 @@ HANNFMapInit(HANNF* hannf)
         // zero entries
         // assemble
         // set to random values
-        MatCreateDense(hannf->comm, PETSC_DECIDE, PETSC_DECIDE, hannf->nrow_global[i], hannf->ncol[i] - 1, &xarray[xarridx], &hannf->W[i]);
+        MatCreateDense(hannf->comm, PETSC_DECIDE, PETSC_DECIDE, hannf->nrow_global[i], hannf->ncol[i] - 1, &memarray[memidx], &hannf->W[i]);
         MatAssemblyBegin(hannf->W[i], MAT_FINAL_ASSEMBLY);
         MatAssemblyEnd(hannf->W[i], MAT_FINAL_ASSEMBLY);
         // create vectors
-        MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->dW[i]);
+        // forward
         MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->b[i]);
-        MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->db[i]);
         MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->s[i]);
         MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->h[i]);
-        
+        MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->w[i]);
         // create scatter context and h_all from h
         VecScatterCreateToAll(hannf->h[i], &hannf->h_scatter[i], &hannf->h_all[i]);
-        
+        // derivative
+        MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->dW[i]);
+        MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->db[i]);
         MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->dh[i]);
-        MatCreateVecs(hannf->W[i], PETSC_NULL, &hannf->w[i]);
         // add offset for matrix
         // place array
-        xarridx = xarridx + hannf->nrow_local[i] * (hannf->ncol[i] - 1);
-        VecPlaceArray(hannf->b[i], &xarray[xarridx]);
+        memidx = memidx + hannf->nrow_local[i] * (hannf->ncol[i] - 1);
+        VecPlaceArray(hannf->b[i], &memarray[memidx]);
         VecAssemblyBegin(hannf->b[i]);
         VecAssemblyEnd(hannf->b[i]);
         // add offset for vector
-        xarridx = xarridx + hannf->nrow_local[i];
+        memidx = memidx + hannf->nrow_local[i];
     }
-    // restore xx vector
-    VecRestoreArray(hannf->xx, &xarray);
+    // restore mem vector
+    VecRestoreArray(hannf->mem, &memarray);
     // debug
     HANNFDebug(hannf, "HANNFMapInit\n");
     PetscFunctionReturn(0);
 }
+
+
+
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFMapLogistic"
@@ -210,7 +229,7 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
     
     // get the array from the gradient vector
     // set the index counter to the local length, i.e. one off the last entry
-    garrayidx = hannf->nvec_local;
+    garrayidx = hannf->nmem_local;
     VecGetArray(g, &garray);
     
     // place all arrays, b and W
@@ -331,14 +350,14 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
 
 
 
-//    PetscPrintf(PETSC_COMM_SELF, "nvec_global: %d, nvec_local: %d\n", hannf->nvec_global, hannf->nvec_local);
-//    PetscPrintf(PETSC_COMM_SELF, "i: %d, nvec_global: %d, nvec_local: %d, ncol: %d\n",
+//    PetscPrintf(PETSC_COMM_SELF, "nmem_global: %d, nmem_local: %d\n", hannf->nmem_global, hannf->nmem_local);
+//    PetscPrintf(PETSC_COMM_SELF, "i: %d, nmem_global: %d, nmem_local: %d, ncol: %d\n",
 //                i, hannf->nrow_global[i], hannf->nrow_local[i], hannf->ncol[i]);
 //  !!! AUFADDIEREN NICHT VERGESSEN !!!
 //    PetscPrintf(PETSC_COMM_WORLD, "bd[i] ...\n");
 //    VecView(hannf->db[i], PETSC_VIEWER_STDOUT_WORLD);
 
-//    PetscPrintf(PETSC_COMM_SELF, "i: %d, nvec_global: %d, nvec_local: %d, ncol: %d\n",
+//    PetscPrintf(PETSC_COMM_SELF, "i: %d, nmem_global: %d, nmem_local: %d, ncol: %d\n",
 //                i, hannf->nrow_global[i], hannf->nrow_local[i], hannf->ncol[i]);
 
 //    PetscPrintf(PETSC_COMM_WORLD, "g ...\n");
@@ -348,7 +367,7 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
 //    VecView(g, pv);
 //    PetscViewerDestroy(&pv);
 
-//        PetscPrintf(PETSC_COMM_SELF, "i: %d, nvec_global: %d, nvec_local: %d, ncol: %d\n",
+//        PetscPrintf(PETSC_COMM_SELF, "i: %d, nmem_global: %d, nmem_local: %d, ncol: %d\n",
 //                    i, hannf->nrow_global[i], hannf->nrow_local[i], hannf->ncol[i]);
 
 //    VecView(hannf->h[i-1], PETSC_VIEWER_STDOUT_WORLD);

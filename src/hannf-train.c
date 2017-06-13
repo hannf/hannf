@@ -155,7 +155,7 @@ HANNFTrainInit(HANNF* hannf)
 //    VecAssemblyEnd(hannf->ydiff);
     
     // create the optimization vector, use the work vector xx
-    VecDuplicate(hannf->xx, &hannf->x);
+    VecDuplicate(hannf->mem, &hannf->x);
     VecSetRandom(hannf->x, PETSC_NULL);
     VecAssemblyBegin(hannf->x);
     VecAssemblyEnd(hannf->x);

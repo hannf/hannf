@@ -24,15 +24,12 @@ PetscErrorCode
 HANNFLoadFinal(HANNF* hannf)
 {
     PetscFunctionBegin;
-
-    // free hidden layer size
+    // free load variables
     PetscFree(hannf->nrow_global);
     PetscFree(hannf->nrow_local);
     PetscFree(hannf->ncol);
-
     // debug
     HANNFDebug(hannf, "HANNFLoadFinal\n");
-    
     PetscFunctionReturn(0);
 }
 
@@ -42,30 +39,32 @@ PetscErrorCode
 HANNFLoadInit(HANNF* hannf)
 {
     PetscFunctionBegin;
-
     //
     // W1,  (hannf->nhi[0], hannf->nin)   ; b1, h, s,  (hannf->nhi[0])
     // W2,  (hannf->nhi[1], hannf->nhi[0]); b2, h, s,  (hannf->nhi[1])
     // ...
     // Wnh, (hannf->nout, hannf->nhi[n-1]); bnh, h, s, (hannf->nout)
     //
-
     // work vars
     MPI_Comm comm = hannf->comm;
     PetscInt nproc;
     PetscInt myproc;
     PetscInt nmax, i;
-    PetscInt nvec_global = 0;
-    PetscInt nvec_local = 0;
+    PetscInt nmem_global = 0;
+    PetscInt nmem_local = 0;
     PetscInt nrow_global, nrow_local, ncol;
-
+    // determine process count and my process number
+    MPI_Comm_size(comm, &nproc);
+    MPI_Comm_rank(comm, &myproc);
+    // store
+    hannf->nproc = nproc;
+    hannf->myproc = myproc;
     // compute local and global sizes for later use
     // allocate memory for storage
     nmax = hannf->nh + 1;
     PetscMalloc(nmax*sizeof(PetscInt), &hannf->nrow_global);
     PetscMalloc(nmax*sizeof(PetscInt), &hannf->nrow_local);
     PetscMalloc(nmax*sizeof(PetscInt), &hannf->ncol);
-    
     // loop over layers
     for(i = 0; i < hannf->nh+1; i++)
     {
@@ -89,107 +88,31 @@ HANNFLoadInit(HANNF* hannf)
             // matrix W plus vector b
             ncol = (hannf->nhi[i-1] + 1);
         }
-
         // get petsc distribution
         nrow_local = PETSC_DECIDE;
         PetscSplitOwnership(comm, &nrow_local, &nrow_global);
-        
         // sum up
-        nvec_global = nvec_global + nrow_global * ncol;
-        nvec_local = nvec_local + nrow_local * ncol;
-        
+        nmem_global = nmem_global + nrow_global * ncol;
+        nmem_local = nmem_local + nrow_local * ncol;
         // store
         hannf->nrow_global[i] = nrow_global;
         hannf->nrow_local[i] = nrow_local;
         hannf->ncol[i] = ncol;
     }
-
     // store global
-    hannf->nvec_local = nvec_local;
-    hannf->nvec_global = nvec_global;
-
-    // determine process count and my process number
-    MPI_Comm_size(comm, &nproc);
-    MPI_Comm_rank(comm, &myproc);
-    // store
-    hannf->nproc = nproc;
-    hannf->myproc = myproc;
-
+    hannf->nmem_local = nmem_local;
+    hannf->nmem_global = nmem_global;
     // debug, global
     HANNFDebug(hannf, FSSD, "HANNFLoadInit", "nproc:", nproc);
-    HANNFDebug(hannf, FSSD, "HANNFLoadInit", "nvec_global:", nvec_global);
+    HANNFDebug(hannf, FSSD, "HANNFLoadInit", "nmem_global:", nmem_global);
     // debug, local
     if (hannf->debug > 0) {
-        PetscSynchronizedPrintf(comm, "%17s %-40s %18s %-8d %18s %-8d\n", " ", "HANNFLoadInit", "myproc:", myproc, "nvec_local:", nvec_local);
+        PetscSynchronizedPrintf(comm, "%17s %-40s %18s %-8d %18s %-8d\n", " ", "HANNFLoadInit", "myproc:", myproc, "nmem_local:", nmem_local);
         PetscSynchronizedFlush(comm, PETSC_STDOUT);
     }
-
     // debug
     HANNFDebug(hannf, "HANNFLoadInit\n");
-
     PetscFunctionReturn(0);
 }
-
-//#undef  __FUNCT__
-//#define __FUNCT__ "HANNFNetInit"
-//PetscErrorCode
-//HANNFNetInit(HANNF* hannf)
-//{
-//    PetscFunctionBegin;
-//    char annType[PETSC_MAX_PATH_LEN];
-//    // get network type
-//    HANNFUtilOptionsGetString(hannf, "-HANNFType", annType);
-//    if (strcmp(annType, HANNF_TYPE_MLP) == 0) {
-//        
-//        // HANNF_TYPE_MLP, "mlp", multi layer perceptron
-//        PetscInt nmax, i;
-//        // store type
-//        hannf->type = HANNF_TYPE_MLP;
-//        // input layer size
-//        // output layer size
-//        // hidden layer count
-//        // hidden layer(s) size(s)
-//        HANNFUtilOptionsGetInt(hannf, "-HANNFInputNeuronCount", &hannf->nin);
-//        HANNFUtilOptionsGetInt(hannf, "-HANNFOutputNeuronCount", &hannf->nout);
-//        HANNFUtilOptionsGetInt(hannf, "-HANNFHiddenLayerCount", &hannf->nh);
-//        nmax = hannf->nh;
-//        PetscMalloc(nmax * sizeof(PetscInt), &hannf->nhi);
-//        HANNFUtilOptionsGetIntArray(hannf, "-HANNFHiddenLayerNeuronCount", &nmax, hannf->nhi);
-//        // init load distribution
-//        HANNFNetLoadInit(hannf);
-//
-//    } else {
-//        // unkown HANNF type, abort execution
-//        char message[PETSC_MAX_PATH_LEN];
-//        sprintf(message, "Unknown HANNF type '%s'.", annType);
-//        HANNFFlag(PETSC_FALSE, message);
-//    }
-//    // debug
-//    HANNFDebug(hannf, "HANNFNetInit\n");
-//    PetscFunctionReturn(0);
-//}
-//
-//#undef  __FUNCT__
-//#define __FUNCT__ "HANNFNetFinal"
-//PetscErrorCode
-//HANNFNetFinal(HANNF* hannf)
-//{
-//    PetscFunctionBegin;
-//    if (strcmp(hannf->type, HANNF_TYPE_MLP) == 0) {
-//        // final load distribution
-//        // free hidden layer neuron count
-//        HANNFNetLoadFinal(hannf);
-//        PetscFree(hannf->nhi);
-//    } else {
-//        // unkown HANNF type, abort execution
-//        char message[PETSC_MAX_PATH_LEN];
-//        sprintf(message, "Unknown HANNF type '%s'.", hannf->type);
-//        HANNFFlag(PETSC_FALSE, message);
-//    }
-//    // debug
-//    HANNFDebug(hannf, "HANNFNetFinal\n");
-//    PetscFunctionReturn(0);
-//}
-//
 
 

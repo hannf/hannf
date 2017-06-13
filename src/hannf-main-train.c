@@ -36,7 +36,7 @@ main(int argc, char **args)
         PetscTime(&hannf.startTime);
         HANNFInitWithOptionFile(&hannf, args[1]);
 //        HANNFTrain(&hannf);
-//        HANNFFinal(&hannf);
+        HANNFFinal(&hannf);
     
     } else {
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR:\n");
