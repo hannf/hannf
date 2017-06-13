@@ -16,18 +16,17 @@
  *
  */
 
-#ifndef HANNF_MAP_H
-#define HANNF_MAP_H 1
+#ifndef HANNF_LOAD_H
+#define HANNF_LOAD_H 1
 
-#include "hannf-load.h"
+#include "hannf-net.h"
 
+//extern PetscErrorCode HANNFNetInit(HANNF*);
+//extern PetscErrorCode HANNFNetLoadInit(HANNF*);
+//extern PetscErrorCode HANNFNetCreate(HANNF*);
+//extern PetscErrorCode HANNFNetDestroy(HANNF*);
 
-extern PetscErrorCode HANNFMapInit(HANNF*);
+//extern PetscErrorCode HANNFNetFinal(HANNF*);
+//extern PetscErrorCode HANNFNetLoadFinal(HANNF*);
 
-extern PetscErrorCode HANNFMap(HANNF*, Vec, Vec);
-extern PetscErrorCode HANNFMapGradient(HANNF*, Vec, Vec, Vec);
-extern PetscErrorCode HANNFMapLogistic(HANNF*, Vec, Vec, Vec);
-
-extern PetscErrorCode HANNFMapFinal(HANNF*);
-
-#endif /* HANNF_MAP_H */
+#endif /* HANNF_LOAD_H */

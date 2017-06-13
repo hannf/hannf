@@ -22,6 +22,7 @@ HANNF_TRAIN_OBJCS = \
 	src/hannf-util.o \
 	src/hannf-init.o \
 	src/hannf-net.o \
+	src/hannf-load.o \
 	src/hannf-map.o \
 	src/hannf-train.o \
 	src/hannf-main-train.o
