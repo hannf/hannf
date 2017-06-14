@@ -21,13 +21,13 @@
 
 #include "hannf-load.h"
 
-
 extern PetscErrorCode HANNFMapInit(HANNF*);
+extern PetscErrorCode HANNFMapFinal(HANNF*);
 
 extern PetscErrorCode HANNFMap(HANNF*, Vec, Vec);
 extern PetscErrorCode HANNFMapGradient(HANNF*, Vec, Vec, Vec);
-extern PetscErrorCode HANNFMapLogistic(HANNF*, Vec, Vec, Vec);
 
-extern PetscErrorCode HANNFMapFinal(HANNF*);
+extern PetscErrorCode HANNFMapNeuronReceive(HANNF*, Vec, Mat, Vec, Vec);
+extern PetscErrorCode HANNFMapNeuronActivate(HANNF*, Vec, Vec, Vec);
 
 #endif /* HANNF_MAP_H */

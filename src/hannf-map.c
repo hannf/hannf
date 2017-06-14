@@ -136,14 +136,10 @@ HANNFMapInit(HANNF* hannf)
     PetscFunctionReturn(0);
 }
 
-
-
-
-
 #undef  __FUNCT__
-#define __FUNCT__ "HANNFMapLogistic"
+#define __FUNCT__ "HANNFMapNeuronActivate"
 PetscErrorCode
-HANNFMapLogistic(HANNF *hannf, Vec dh, Vec h, Vec s)
+HANNFMapNeuronActivate(HANNF *hannf, Vec dh, Vec h, Vec s)
 {
     PetscFunctionBegin;
     // work vars
@@ -169,7 +165,22 @@ HANNFMapLogistic(HANNF *hannf, Vec dh, Vec h, Vec s)
     VecRestoreArray(h, &harray);
     VecRestoreArray(s, &sarray);
     // debug
-    HANNFDebug(hannf, "HANNFMapLogistic\n");
+    HANNFDebug(hannf, "HANNFMapNeuronActivate\n");
+    PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "HANNFMapNeuronReceive"
+PetscErrorCode
+HANNFMapNeuronReceive(HANNF* hannf, Vec s, Mat W, Vec b, Vec x)
+{
+    PetscFunctionBegin;
+    // weight and sum the network inputs (W, weights)
+    // translate (b, bias)
+    // s = W * x + b
+    MatMultAdd(W, x, b, s);
+    // debug
+    HANNFDebug(hannf, "HANNFMapNeuronReceive\n");
     PetscFunctionReturn(0);
 }
 
@@ -185,8 +196,8 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     // s[0] = W[0] * x + b[0]
     // h[0] = sigma(s[0])
     i = 0;
-    MatMultAdd(hannf->W[i], x, hannf->b[i], hannf->s[i]);
-    HANNFMapLogistic(hannf, hannf->dh[i], hannf->h[i], hannf->s[i]);
+    HANNFMapNeuronReceive(hannf, hannf->s[i], hannf->W[i], hannf->b[i], x);
+    HANNFMapNeuronActivate(hannf, hannf->dh[i], hannf->h[i], hannf->s[i]);
     // scatter to all
     VecScatterBegin(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
     VecScatterEnd(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
@@ -195,8 +206,8 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     {
         // s[i] = W[i] * h[i-1] + b[i]
         // h[i] = sigma(s[i])
-        MatMultAdd(hannf->W[i], hannf->h[i-1], hannf->b[i], hannf->s[i]);
-        HANNFMapLogistic(hannf, hannf->dh[i], hannf->h[i], hannf->s[i]);
+        HANNFMapNeuronReceive(hannf, hannf->s[i], hannf->W[i], hannf->b[i], hannf->h[i-1]);
+        HANNFMapNeuronActivate(hannf, hannf->dh[i], hannf->h[i], hannf->s[i]);
         // scatter to all
         VecScatterBegin(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
@@ -205,8 +216,8 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     // s[i] = W[i] * h[i-1] + b[i]
     // y = sigma(s[i])
     i = hannf->nh;
-    MatMultAdd(hannf->W[i], hannf->h[i-1], hannf->b[i], hannf->s[i]);
-    HANNFMapLogistic(hannf, hannf->dh[i], y, hannf->s[i]);
+    HANNFMapNeuronReceive(hannf, hannf->s[i], hannf->W[i], hannf->b[i], hannf->h[i-1]);
+    HANNFMapNeuronActivate(hannf, hannf->dh[i], y, hannf->s[i]);
     // scatter to all
     VecScatterBegin(hannf->h_scatter[i], y, hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
     VecScatterEnd(hannf->h_scatter[i], y, hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
@@ -214,6 +225,11 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     HANNFDebug(hannf, "HANNFMap\n");
     PetscFunctionReturn(0);
 }
+
+
+
+
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFMapGradient"

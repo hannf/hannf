@@ -63,7 +63,7 @@ typedef struct {
     // derivatives
     Vec             *dW;            // derivatives with respect to a W matrix, columnwise
     Vec             *db;            // derivatives with respect to a b vector
-    Vec             *dh;
+    Vec             *dh;            // derivative of activation function
     Vec             mem;            // storage vector
     // training
     PetscInt        nt;             // training data count (or sequence length)
@@ -78,21 +78,5 @@ typedef struct {
 
 #endif /* HANNF_TYPE_H */
 
-//// derivatives
-//// weight matrices, columnwise only
-//// bias vectors
-//// activation
-//PetscMalloc(nmax * sizeof(Vec), &hannf->dW);
-//PetscMalloc(nmax * sizeof(Vec), &hannf->db);
-//PetscMalloc(nmax * sizeof(Vec), &hannf->dh);
-//// scatter of intermediate results
-//// contexts
-//// vectors, same copy for each process
-//PetscMalloc(nmax * sizeof(VecScatter), &hannf->h_scatter);
-//PetscMalloc(nmax * sizeof(Vec), &hannf->h_all);
-//// create storage vector
-//// use computed sizes (HANNFLoadInit)
-//// set to random values
-//VecCreate(hannf->comm, &hannf->mem);
 
-//    Vec             y;              // output/result vector
+
