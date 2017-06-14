@@ -35,8 +35,8 @@ HANNFInitWithOptionFile(HANNF* hannf, const char* filepath)
     // init net, map, train, ...
     HANNFNetInit(hannf);
     HANNFLoadInit(hannf);
-//    HANNFMapInit(hannf);
-//    HANNFTrainInit(hannf);
+    HANNFMapInit(hannf);
+    HANNFTrainInit(hannf);
     // wait for all processors
     PetscBarrier(PETSC_NULL);
     // debug
@@ -53,8 +53,8 @@ HANNFFinal(HANNF* hannf)
     // wait for all processors
     PetscBarrier(PETSC_NULL);
     // final ..., train, map, net
-//    HANNFTrainFinal(hannf);
-//    HANNFMapFinal(hannf);
+    HANNFTrainFinal(hannf);
+    HANNFMapFinal(hannf);
     HANNFLoadFinal(hannf);
     HANNFNetFinal(hannf);
     // debug

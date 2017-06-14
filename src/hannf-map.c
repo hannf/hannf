@@ -25,6 +25,10 @@ HANNFMapFinal(HANNF* hannf)
 {
     PetscFunctionBegin;
     // destroy net matrices and vectors
+    // x
+    VecDestroy(&hannf->x);
+    VecDestroy(&hannf->x_all);
+    VecScatterDestroy(&hannf->x_scatter);
     // forward
     MatDestroyMatrices(hannf->nh+1, &hannf->W);
     VecDestroyVecs(hannf->nh+1, &hannf->b);
@@ -131,6 +135,11 @@ HANNFMapInit(HANNF* hannf)
     }
     // restore mem vector
     VecRestoreArray(hannf->mem, &memarray);
+    // we need an additional vector for the computation of the derivative w.r.t. W[0]
+    // create input vector x
+    // create scatter context for input vector x
+    MatCreateVecs(hannf->W[0], &hannf->x, PETSC_NULL);
+    VecScatterCreateToAll(hannf->x, &hannf->x_scatter, &hannf->x_all);
     // debug
     HANNFDebug(hannf, "HANNFMapInit\n");
     PetscFunctionReturn(0);
@@ -191,45 +200,48 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
 {
     PetscFunctionBegin;
     // work vars
-    PetscInt i;
+    Mat *W = hannf->W;
+    Vec *s = hannf->s;
+    Vec *h = hannf->h;
+    Vec *b = hannf->b;
+    Vec *dh = hannf->dh;
+    Vec *h_all = hannf->h_all;
+    VecScatter *h_scatter = hannf->h_scatter;
+    PetscInt i, nh;
     // first layer
     // s[0] = W[0] * x + b[0]
-    // h[0] = sigma(s[0])
+    // dh[0], h[0] = sigma(s[0])
+    nh = hannf->nh;
     i = 0;
-    HANNFMapNeuronReceive(hannf, hannf->s[i], hannf->W[i], hannf->b[i], x);
-    HANNFMapNeuronActivate(hannf, hannf->dh[i], hannf->h[i], hannf->s[i]);
+    HANNFMapNeuronReceive(hannf, s[i], W[i], b[i], x);
+    HANNFMapNeuronActivate(hannf, dh[i], h[i], s[i]);
     // scatter to all
-    VecScatterBegin(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
-    VecScatterEnd(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterBegin(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
     // layers inbetween
-    for(i = 1; i < hannf->nh; i++)
+    for(i = 1; i < nh; i++)
     {
         // s[i] = W[i] * h[i-1] + b[i]
-        // h[i] = sigma(s[i])
-        HANNFMapNeuronReceive(hannf, hannf->s[i], hannf->W[i], hannf->b[i], hannf->h[i-1]);
-        HANNFMapNeuronActivate(hannf, hannf->dh[i], hannf->h[i], hannf->s[i]);
+        // dh[i], h[i] = sigma(s[i])
+        HANNFMapNeuronReceive(hannf, s[i], W[i], b[i], h[i-1]);
+        HANNFMapNeuronActivate(hannf, dh[i], h[i], s[i]);
         // scatter to all
-        VecScatterBegin(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
-        VecScatterEnd(hannf->h_scatter[i], hannf->h[i], hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+        VecScatterBegin(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+        VecScatterEnd(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
     }
     // last layer
     // s[i] = W[i] * h[i-1] + b[i]
-    // y = sigma(s[i])
-    i = hannf->nh;
-    HANNFMapNeuronReceive(hannf, hannf->s[i], hannf->W[i], hannf->b[i], hannf->h[i-1]);
-    HANNFMapNeuronActivate(hannf, hannf->dh[i], y, hannf->s[i]);
+    // dh[i], y = sigma(s[i])
+    i = nh;
+    HANNFMapNeuronReceive(hannf, s[i], W[i], b[i], h[i-1]);
+    HANNFMapNeuronActivate(hannf, dh[i], y, s[i]);
     // scatter to all
-    VecScatterBegin(hannf->h_scatter[i], y, hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
-    VecScatterEnd(hannf->h_scatter[i], y, hannf->h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterBegin(h_scatter[i], y, h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(h_scatter[i], y, h_all[i], INSERT_VALUES, SCATTER_FORWARD);
     // debug
     HANNFDebug(hannf, "HANNFMap\n");
     PetscFunctionReturn(0);
 }
-
-
-
-
-
 
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFMapGradient"
@@ -238,125 +250,163 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
 {
     PetscFunctionBegin;
     // work vars
-    PetscInt i, j;
     PetscScalar *garray;
+    PetscInt gidx;
+    Vec *dh = hannf->dh;
+    Vec *db = hannf->db;
+    Vec *dW = hannf->dW;
+    Mat *W = hannf->W;
+    Vec *w = hannf->w;
+    Vec *h_all = hannf->h_all;
     PetscScalar *h_all_array;
-    PetscInt garrayidx;
+    PetscScalar *x_all_array;
+    PetscInt *nrow_local = hannf->nrow_local;
+    PetscInt *ncol = hannf->ncol;
+    PetscInt nh = hannf->nh;
+    PetscInt i, j;
     
     // get the array from the gradient vector
     // set the index counter to the local length, i.e. one off the last entry
-    garrayidx = hannf->nmem_local;
     VecGetArray(g, &garray);
-    
-    // place all arrays, b and W
-    for (i = hannf->nh; i >= 0; i--) {
-        garrayidx = garrayidx - hannf->nrow_local[i];
-        VecPlaceArray(hannf->db[i], &garray[garrayidx]);
-        
-        // loop over columns, backwards!
-        for(j = hannf->ncol[i] - 2; j >= 0; j--)
-        {
-        }
-        
-    }
-    
+    gidx = hannf->nmem_local;
+
     // go backward through the chain of network layers
     // last layer
     // db_nh = y .* sigma'(s_nh)
-    //       = y .* (h_nh .* (1 - h_nh)) * W_nh       <- FIX ME, here we know we use the logistic function,
-    //                                                           it was pre-computed during the computation of sigma
     //       = y .* dh_nh
     
     // set index to last layer
     // compute offset for the last vector b
     // place g array into db_i vector
     i = hannf->nh;
-    garrayidx = garrayidx - hannf->nrow_local[i];
-    VecPlaceArray(hannf->db[i], &garray[garrayidx]);
+    gidx = gidx - nrow_local[i];
+    VecPlaceArray(db[i], &garray[gidx]);
     
     // compute the gradient w.r.t. the last vector b
-    // add to the gradient vector
-    VecPointwiseMult(hannf->w[i], y, hannf->dh[i]);
-    VecAXPY(hannf->db[i], 1.0, hannf->w[i]);
+    VecPointwiseMult(db[i], y, dh[i]);
     
     // dW_nh = (db_nh * h_{nh-1}^T), dyadic product
     // we treat the derivative w.r.t. the last matrix W, columnwise
     
     // get h_all array
     // !!! index is i-1 !!!
-    VecGetArray(hannf->h_all[i-1], &h_all_array);
+    VecGetArray(h_all[i-1], &h_all_array);
     
     // loop over vector entries, backwards!
-    for(j = hannf->ncol[i] - 2; j >= 0; j--)
+    for(j = ncol[i]-2; j >= 0; j--)
     {
-        // compute offset for the last matrix W
+        // compute offset for the matrix W
         // place g array into work vector dW_i
-        garrayidx = garrayidx - hannf->nrow_local[i];
-        VecPlaceArray(hannf->dW[i], &garray[garrayidx]);
+        gidx = gidx - nrow_local[i];
+        VecPlaceArray(dW[i], &garray[gidx]);
         
         // W_ij = W_ij + h_{i-1}j*db_i
-        VecAXPY(hannf->dW[i], h_all_array[j], hannf->db[i]);
+        VecAXPY(dW[i], h_all_array[j], db[i]);
 
         // reset array
-        VecResetArray(hannf->dW[i]);
+        VecResetArray(dW[i]);
     }
-    // restore h_all array
-    VecRestoreArray(hannf->h_all[i-1], &h_all_array);
-    // we don't need the gradient w.r.t. b anymore
-    VecResetArray(hannf->db[i]);
-    
-    
 
+    // restore h_all array
+    VecRestoreArray(h_all[i-1], &h_all_array);
+
+    // prepare the next step
+    // w[i-1]^T = bd[i]^T * W[i]
+    MatMultTranspose(W[i], db[i], w[i-1]);
+    
+    // reset db_i vector array
+    VecResetArray(db[i]);
+    
     // layers inbetween
-    for(i = hannf->nh - 1; i > 0; i--)
+    for(i = nh-1; i > 0; i--)
     {
-        
-//        garrayidx = garrayidx - hannf->nrow_local[i];
-//        VecPlaceArray(hannf->db[i], &garray[garrayidx]);
+        // compute offset for the last vector b
+        // place g array into db_i vector
+        gidx = gidx - nrow_local[i];
+        VecPlaceArray(db[i], &garray[gidx]);
 
         // db_i = db_{i+1} * W_{i+1} .* sigma'(s_i)
         //      = db_{i+1} * W_{i+1} .* dh_i
         //      = w_i .* dh_i
-        MatMultTranspose(hannf->W[i+1], hannf->db[i+1], hannf->w[i]);
-        VecPointwiseMult(hannf->db[i], hannf->w[i], hannf->dh[i]);
-//        VecPointwiseMult(hannf->w[i], hannf->w[i], hannf->dh[i]);
-//        VecAXPY(hannf->db[i], 1.0, hannf->w[i]);
 
+        // compute the gradient w.r.t. the last vector b
+        VecPointwiseMult(db[i], w[i], dh[i]);
+
+        // dW_i = (db_i * h_{i-1}^T), dyadic product
+        // we treat the derivative w.r.t. the last matrix W, columnwise
+
+        // get h_all array
+        // !!! index is i-1 !!!
+        VecGetArray(h_all[i-1], &h_all_array);
         
-        // dW_i = db_i * h_{i-1}^T
-        //
-        // ...
-        //
+        // loop over vector entries, backwards!
+        for(j = ncol[i]-2; j >= 0; j--)
+        {
+            // compute offset for the matrix W
+            // place g array into work vector dW_i
+            gidx = gidx - nrow_local[i];
+            VecPlaceArray(dW[i], &garray[gidx]);
+            
+            // W_ij = W_ij + h_{i-1}j*db_i
+            VecAXPY(dW[i], h_all_array[j], db[i]);
+            
+            // reset array
+            VecResetArray(dW[i]);
+        }
         
+        // restore h_all array
+        VecRestoreArray(h_all[i-1], &h_all_array);
+        
+        // prepare the next step
+        // w[i-1]^T = bd[i]^T * W[i]
+        MatMultTranspose(W[i], db[i], w[i-1]);
+        
+        // reset db_i vector array
+        VecResetArray(db[i]);
     }
 
-    // debug
-    VecView(g, PETSC_VIEWER_STDOUT_WORLD);
-    PetscEnd();
-    
-    
-    
     // first layer
     // db_0 = db_1 * W_1 .* sigma'(s_0)
     //      = db_{i+1} * W_{i+1} .* dh_i
     //      = w_0 .* dh_0
+
+    // compute offset for the last vector b
+    // place g array into db_i vector
     i = 0;
-    MatMultTranspose(hannf->W[i+1], hannf->db[i+1], hannf->w[i]);
-    VecPointwiseMult(hannf->db[i], hannf->w[i], hannf->dh[i]);
+    gidx = gidx - nrow_local[i];
+    VecPlaceArray(db[i], &garray[gidx]);
+    
+    // compute the gradient w.r.t. the last vector b
+    VecPointwiseMult(db[i], w[i], dh[i]);
+  
+    // reset db_i vector array
+    VecResetArray(db[i]);
 
     // dW_0 = db_0 * x^T
-    //
-    // ...
-    //
+
+    // get x_all array
+    VecGetArray(hannf->x_all, &x_all_array);
     
-    
-    
-    // reset all arrays
-    for (i = hannf->nh; i >= 0; i--) {
-        VecResetArray(hannf->db[i]);
+    // loop over vector entries, backwards!
+    for(j = ncol[i]-2; j >= 0; j--)
+    {
+        // compute offset for the matrix W
+        // place g array into work vector dW_i
+        gidx = gidx - nrow_local[i];
+        VecPlaceArray(dW[i], &garray[gidx]);
+        
+        // W_ij = W_ij + x_j * db_i
+        VecAXPY(dW[i], x_all_array[j], db[i]);
+        
+        // reset array
+        VecResetArray(dW[i]);
     }
-    // restore g vector array
-    VecRestoreArray(g, &garray);
+    
+    // restore h_all array
+    VecRestoreArray(hannf->x_all, &x_all_array);
+
+    // gidx
+    PetscPrintf(hannf->comm, "gidx: %d\n", gidx);
     
     // debug
     HANNFDebug(hannf, "HANNFMapGradient\n");
@@ -365,26 +415,3 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
 
 
 
-
-//    PetscPrintf(PETSC_COMM_SELF, "nmem_global: %d, nmem_local: %d\n", hannf->nmem_global, hannf->nmem_local);
-//    PetscPrintf(PETSC_COMM_SELF, "i: %d, nmem_global: %d, nmem_local: %d, ncol: %d\n",
-//                i, hannf->nrow_global[i], hannf->nrow_local[i], hannf->ncol[i]);
-//  !!! AUFADDIEREN NICHT VERGESSEN !!!
-//    PetscPrintf(PETSC_COMM_WORLD, "bd[i] ...\n");
-//    VecView(hannf->db[i], PETSC_VIEWER_STDOUT_WORLD);
-
-//    PetscPrintf(PETSC_COMM_SELF, "i: %d, nmem_global: %d, nmem_local: %d, ncol: %d\n",
-//                i, hannf->nrow_global[i], hannf->nrow_local[i], hannf->ncol[i]);
-
-//    PetscPrintf(PETSC_COMM_WORLD, "g ...\n");
-//    PetscViewer pv;
-//    PetscViewerBinaryOpen(hannf->comm, "g.petsc", FILE_MODE_WRITE, &pv);
-//    VecView(g, PETSC_VIEWER_STDOUT_WORLD);
-//    VecView(g, pv);
-//    PetscViewerDestroy(&pv);
-
-//        PetscPrintf(PETSC_COMM_SELF, "i: %d, nmem_global: %d, nmem_local: %d, ncol: %d\n",
-//                    i, hannf->nrow_global[i], hannf->nrow_local[i], hannf->ncol[i]);
-
-//    VecView(hannf->h[i-1], PETSC_VIEWER_STDOUT_WORLD);
-//    VecView(hannf->h_all[i-1], PETSC_VIEWER_STDOUT_SELF);

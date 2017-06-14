@@ -129,7 +129,7 @@ HANNFTrainFinal(HANNF* hannf)
     // destroy optimization context
     // destroy optimization vector
     TaoDestroy(&hannf->tao);
-    VecDestroy(&hannf->x);
+    VecDestroy(&hannf->u);
 //    // derivative
 //    VecDestroy(&hannf->ydiff);
     // final training data
@@ -155,16 +155,16 @@ HANNFTrainInit(HANNF* hannf)
 //    VecAssemblyEnd(hannf->ydiff);
     
     // create the optimization vector, use the work vector xx
-    VecDuplicate(hannf->mem, &hannf->x);
-    VecSetRandom(hannf->x, PETSC_NULL);
-    VecAssemblyBegin(hannf->x);
-    VecAssemblyEnd(hannf->x);
+    VecDuplicate(hannf->mem, &hannf->u);
+    VecSetRandom(hannf->u, PETSC_NULL);
+    VecAssemblyBegin(hannf->u);
+    VecAssemblyEnd(hannf->u);
 
     // create optimization context
     // set initial vector
     // set objective and gradient
     TaoCreate(hannf->comm, &hannf->tao);
-    TaoSetInitialVector(hannf->tao, hannf->x);
+    TaoSetInitialVector(hannf->tao, hannf->u);
     TaoSetObjectiveAndGradientRoutine(hannf->tao, HANNFObjectiveAndGradient, (void*)hannf);
 
     // set option prefix
@@ -209,14 +209,16 @@ HANNFObjectiveAndGradient(Tao tao, Vec x, PetscReal *f, Vec g, void *ctx)
     // work vars
     PetscInt nt, nh, i;
     PetscReal norm, sum;
-
+    Vec g_i;
     // zero the entries of the gradient vector
-    // before we sum up all gradients internally
+    // create vector for the i_th component
     VecZeroEntries(g);
-    
+    VecDuplicate(g, &g_i);
+    // prepare loop
     sum = 0.0;
     nt = hannf->nt;
     nh = hannf->nh;
+    // loop over training data
     for(i = 0; i < nt; i++)
     {
         //
@@ -232,18 +234,21 @@ HANNFObjectiveAndGradient(Tao tao, Vec x, PetscReal *f, Vec g, void *ctx)
         VecWAXPY(hannf->w[nh], -1.0, hannf->Y[i], hannf->h[nh]);
         VecNorm(hannf->w[nh], NORM_2, &norm);
         sum = sum + norm * norm;
-
         //
         // gradient
         //
         // backwards
         // mathematically from left to right
         // compute gradient w.r.t. the i_th component of the cost function
-        HANNFMapGradient(hannf, hannf->w[nh], hannf->X[i], g);
+        HANNFMapGradient(hannf, hannf->w[nh], hannf->X[i], g_i);
+        // add to gradient vector
+        // g = g + 1.0 * g_i
+        VecAXPY(g, 1.0, g_i);
     }
     // weight the sum with one half
     *f = 0.5 * sum;
-
+    // destroy work vector
+    VecDestroy(&g_i);
     // debug
     HANNFDebug(hannf, "HANNFObjectiveAndGradient\n");
     PetscFunctionReturn(0);

@@ -58,9 +58,12 @@ typedef struct {
     Vec             *s;             // hidden layer, network input vector
     Vec             *h;             // hidden layer, activated vector
     Vec             *w;             // work vectors per layer
+    // derivatives
     VecScatter      *h_scatter;     // scatter context for h_all
     Vec             *h_all;         // hidden layer vector, scattered to all
-    // derivatives
+    Vec             x;              // input vector x
+    VecScatter      x_scatter;      // scatter context for the input vector
+    Vec             x_all;          // input vector scattered to all
     Vec             *dW;            // derivatives with respect to a W matrix, columnwise
     Vec             *db;            // derivatives with respect to a b vector
     Vec             *dh;            // derivative of activation function
@@ -70,7 +73,7 @@ typedef struct {
     Vec             *X;             // input
     Vec             *Y;             // output
     Tao             tao;            // optimization context
-    Vec             x;              // initial/result vector
+    Vec             u;              // optimization initial/result vector
     // work
     Mat             XX;             // input work matrix
     Mat             YY;             // output work matrix

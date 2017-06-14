@@ -22,9 +22,9 @@
 #include "hannf-map.h"
 
 extern PetscErrorCode HANNFTrainInit(HANNF*);
-extern PetscErrorCode HANNFTrainDataInit(HANNF*);
-
 extern PetscErrorCode HANNFTrainFinal(HANNF*);
+
+extern PetscErrorCode HANNFTrainDataInit(HANNF*);
 extern PetscErrorCode HANNFTrainDataFinal(HANNF*);
 
 extern PetscErrorCode HANNFTrain(HANNF*);
