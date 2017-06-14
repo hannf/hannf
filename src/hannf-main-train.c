@@ -27,6 +27,8 @@ main(int argc, char **args)
     PetscInitialize(&argc, &args, PETSC_NULL, PETSC_NULL);
     PetscPushErrorHandler(PetscTraceBackErrorHandler, NULL);
 
+    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+
     // check arguments
     if (argc >= 2) {
         // create hannf data type

@@ -129,7 +129,7 @@ HANNFTrainFinal(HANNF* hannf)
     // destroy optimization context
     // destroy optimization vector
     TaoDestroy(&hannf->tao);
-    VecDestroy(&hannf->u);
+//    VecDestroy(&hannf->u);
 //    // derivative
 //    VecDestroy(&hannf->ydiff);
     // final training data
@@ -155,18 +155,20 @@ HANNFTrainInit(HANNF* hannf)
 //    VecAssemblyEnd(hannf->ydiff);
     
     // create the optimization vector, use the work vector xx
-    VecDuplicate(hannf->mem, &hannf->u);
-    VecSetRandom(hannf->u, PETSC_NULL);
-    VecAssemblyBegin(hannf->u);
-    VecAssemblyEnd(hannf->u);
+//    VecDuplicate(hannf->mem, &hannf->u);
+//    VecSetRandom(hannf->u, PETSC_NULL);
+//    VecAssemblyBegin(hannf->u);
+//    VecAssemblyEnd(hannf->u);
 
     // create optimization context
-    // set initial vector
+    // set initial vector, use the memory/storage vector
     // set objective and gradient
     TaoCreate(hannf->comm, &hannf->tao);
-    TaoSetInitialVector(hannf->tao, hannf->u);
+//    TaoSetInitialVector(hannf->tao, hannf->u);
+    TaoSetInitialVector(hannf->tao, hannf->mem);
     TaoSetObjectiveAndGradientRoutine(hannf->tao, HANNFObjectiveAndGradient, (void*)hannf);
-
+//    TaoSetObjectiveRoutine(hannf->tao, HANNFObjective, (void*)hannf);
+    
     // set option prefix
     // set from options
     TaoSetOptionsPrefix(hannf->tao, "HANNF_");
@@ -198,10 +200,54 @@ HANNFTrain(HANNF* hannf)
     PetscFunctionReturn(0);
 }
 
+//#undef  __FUNCT__
+//#define __FUNCT__ "HANNFObjective"
+//PetscErrorCode
+//HANNFObjective(Tao tao, Vec u, PetscReal *f, void *ctx)
+//{
+//    // get context
+//    HANNF* hannf = (HANNF*) ctx;
+//    PetscFunctionBegin;
+//    // work vars
+//    PetscInt nt, nh, i;
+//    PetscReal norm, sum;
+//    // prepare loop
+//    sum = 0.0;
+//    nt = hannf->nt;
+//    nh = hannf->nh;
+//    // loop over training data
+//    for(i = 0; i < nt; i++)
+//    {
+//        //
+//        // objective
+//        //
+//        // feed forward
+//        // mathematically from right to left
+//        // map training data input x to y
+//        HANNFMap(hannf, hannf->h[nh], hannf->X[i]);
+//        // compute difference
+//        // compute norm of difference
+//        // sum up
+//        VecWAXPY(hannf->w[nh], -1.0, hannf->Y[i], hannf->h[nh]);
+//        VecNorm(hannf->w[nh], NORM_2, &norm);
+//        sum = sum + norm * norm;
+//    }
+//    // weight the sum with one half
+//    *f = 0.5 * sum;
+//    // debug
+////    VecView(u, PETSC_VIEWER_STDOUT_WORLD);
+//    
+////    MatView(hannf->W[0], PETSC_VIEWER_STDOUT_WORLD);
+//    
+////    HANNFDebug(hannf, "%24.16e\n", *f);
+//    HANNFDebug(hannf, "HANNFObjective\n");
+//    PetscFunctionReturn(0);
+//}
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFObjectiveAndGradient"
 PetscErrorCode
-HANNFObjectiveAndGradient(Tao tao, Vec x, PetscReal *f, Vec g, void *ctx)
+HANNFObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
 {
     // get context
     HANNF* hannf = (HANNF*) ctx;
@@ -255,222 +301,3 @@ HANNFObjectiveAndGradient(Tao tao, Vec x, PetscReal *f, Vec g, void *ctx)
 }
 
 
-
-
-
-
-
-
-
-////    VecResetArray(Vec vec)
-//
-//
-//    // free matrices and vectors
-//    MatDestroyMatrices(hannf->nh + 1, &hannf->W);
-//    VecDestroyVecs(hannf->nh + 1, &hannf->b);
-//
-//    // free hidden layers counts
-//    PetscFree(hannf->nhi);
-//
-//    // destroy class matrix
-////    MatDestroy(&hannf->Y);
-////    VecDestroyVecs(hannf->Y
-//
-//    // destroy feature matrix
-////    MatDestroy(&hannf->X);
-
-
-
-//    // determine sizes
-//    HANNFUtilOptionsGetInt(hannf, "-HANNFTrainingFeatureCount", &hannf->nin);
-//    HANNFUtilOptionsGetInt(hannf, "-HANNFTrainingClassCount", &hannf->nout);
-//    // debug
-////    HANNFDebug(hannf, FSSD, "HANNFInitWithOptionFile", "nin:", hannf->nin);
-////    HANNFDebug(hannf, FSSD, "HANNFInitWithOptionFile", "nout:", hannf->nout);
-////    // destroy X, Y
-////    MatDestroy(&X);
-////    MatDestroy(&Y);
-//
-//    for(i = 0; i < hannf->nt; i++)
-//    {
-//
-//    }
-//
-//    MatDestroy(&T);
-//
-////    // read in features
-////    HANNFUtilOptionsGetString(hannf, "-HANNFTrainingInputData", filePath);
-////    // create matrix
-////    Mat X;
-////    MatCreate(hannf->comm, &X);
-////    MatSetType(X, MATDENSE);
-////    // load matrix
-////    PetscViewerBinaryOpen(hannf->comm, filePath, FILE_MODE_READ, &viewer);
-////    MatLoad(X, viewer);
-////    PetscViewerDestroy(&viewer);
-////
-////    // create vectors with matrix array
-////    PetscScalar* Xmatarray;
-////    MatDenseGetArray(X, &Xmatarray);
-////    Vec xx;
-////    MatCreateVecs(X, PETSC_NULL, &xx);
-////
-//////    VecPlaceArray(xx, &Xmatarray[19]);
-//////    VecAssemblyBegin(xx);
-//////    VecAssemblyEnd(xx);
-////
-////
-////    VecDestroy(&xx);
-////    MatDenseRestoreArray(X, &Xmatarray);
-////
-////    // read in classes
-////    HANNFUtilOptionsGetString(hannf, "-HANNFTrainingOutputData", filePath);
-////    // create matrix
-////    Mat Y;
-////    MatCreate(hannf->comm, &Y);
-////    MatSetType(Y, MATDENSE);
-////    // load matrix
-////    PetscViewerBinaryOpen(hannf->comm, filePath, FILE_MODE_READ, &viewer);
-////    MatLoad(Y, viewer);
-////    PetscViewerDestroy(&viewer);
-//
-//
-
-
-
-//
-//
-//// create matrix
-//Mat T;
-//MatCreate(comm, &T);
-//MatSetType(T, MATDENSE);
-//// load matrix
-//PetscViewerBinaryOpen(comm, filePath, FILE_MODE_READ, &viewer);
-//MatLoad(T, viewer);
-//PetscViewerDestroy(&viewer);
-//
-//MatSetRandom(T, PETSC_NULL);
-//MatAssemblyBegin(T, MAT_FINAL_ASSEMBLY);
-//MatAssemblyEnd(T, MAT_FINAL_ASSEMBLY);
-////    MatView(T, PETSC_VIEWER_STDOUT_WORLD);
-//
-//// determine sequence length
-//MatGetSize(T, PETSC_NULL, &hannf->nt);
-//// debug
-//HANNFDebug(hannf, FSSD, "HANNFTrainDataInit", "nt:", hannf->nt);
-//
-////    // create mapping
-////    PetscInt m, n;
-////    MatGetOwnershipRange(T, &m, &n);
-////    PetscPrintf(PETSC_COMM_SELF, "m: %d, n: %d\n", m, n);
-////
-////    IS rows_local;
-////    ISCreateStride(comm, n-m, m, 1, &rows_local);
-////
-////    ISLocalToGlobalMapping rmap;
-////    ISLocalToGlobalMappingCreateIS(rows_local, &rmap);
-////    ISLocalToGlobalMappingView(rmap, PETSC_VIEWER_STDOUT_WORLD);
-////
-////    IS cols_local;
-////    ISCreateStride(comm, hannf->nt, 0, 1, &cols_local);
-////
-////    ISLocalToGlobalMapping cmap;
-////    ISLocalToGlobalMappingCreateIS(cols_local, &cmap);
-////    ISLocalToGlobalMappingView(cmap, PETSC_VIEWER_STDOUT_WORLD);
-////
-////    MatSetLocalToGlobalMapping(T, rmap, cmap);
-////
-////    // debug
-//////    ISLocalToGlobalMapping rmap;
-//////    ISLocalToGlobalMapping cmap;
-//////    MatGetLocalToGlobalMapping(T, &rmap, &cmap);;
-////
-//////    ISLocalToGlobalMappingView(rmap, PETSC_VIEWER_STDOUT_WORLD);
-//////    ISLocalToGlobalMappingView(cmap, PETSC_VIEWER_STDOUT_WORLD);
-////
-////    // split matrix into input and output
-////
-//////
-//////    MatGetSubMatrix(Mat mat,IS isrow,IS iscol,MatReuse cll,Mat *newmat)
-////
-//////    IS rows, cols;
-//////
-//////    PetscInt nrow_local;
-//////    nrow_local = PETSC_DECIDE;
-//////    PetscSplitOwnership(comm, &nrow_local, &hannf->nin);
-//////
-//////    PetscInt ncol_local;
-//////    ncol_local = PETSC_DECIDE;
-//////    PetscSplitOwnership(comm, &ncol_local, &hannf->nt);
-//////
-////////    ISCreateStride(comm, hannf->nin, 0, 1, &rows);
-//////    ISCreateStride(comm, nrow_local, 0, 1, &rows);
-//////    ISView(rows, PETSC_VIEWER_STDOUT_WORLD);
-//////
-////////    ISCreateStride(comm, hannf->nt, 0, 1, &cols);
-////////    ISCreateStride(comm, 1, 0, 1, &cols);
-//////    ISCreateStride(comm, ncol_local, 0, 1, &cols);
-//////    ISView(cols, PETSC_VIEWER_STDOUT_WORLD);
-////
-////    IS rows;
-//////    ISCreateStride(comm, hannf->nin, 0, 1, &rows);
-////    if (hannf->myproc == 0) {
-////        ISCreateStride(comm, 10, 0, 1, &rows);
-////    } else {
-////        ISCreateStride(comm, 9, 10, 1, &rows);
-////    }
-////    ISView(rows, PETSC_VIEWER_STDOUT_WORLD);
-////
-//////    IS cols;
-//////    ISCreateStride(comm, hannf->nt, 0, 1, &cols);
-//////    ISView(cols, PETSC_VIEWER_STDOUT_WORLD);
-//////
-////////    MatGetLocalSubMatrix(Mat mat,IS isrow,IS iscol,Mat *submat)
-////    MatGetSubMatrix(T, rows, PETSC_NULL, MAT_INITIAL_MATRIX, &hannf->XX);
-////////    MatGetLocalSubMatrix(T, rows, PETSC_NULL, &hannf->XX);
-//////    MatGetLocalSubMatrix(T, rows, cols, &hannf->XX);
-////////    MatAssemblyBegin(hannf->XX, MAT_FINAL_ASSEMBLY);
-////////    MatAssemblyEnd(hannf->XX, MAT_FINAL_ASSEMBLY);
-////////    MatView(hannf->XX, PETSC_VIEWER_STDOUT_WORLD);
-//////
-//////
-//////////    ISCreateStride(comm, hannf->nout, hannf->nin, 1, &rows);
-//////////    ISView(rows, PETSC_VIEWER_STDOUT_WORLD);
-//////////
-//////////    MatGetSubMatrix(T, rows, cols, MAT_INITIAL_MATRIX, &hannf->YY);
-//////////    MatView(hannf->YY, PETSC_VIEWER_STDOUT_WORLD);
-////
-////
-////
-////    MatDestroy(&hannf->XX);
-//MatDestroy(&T);
-
-
-//    TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,(void *)&user);
-//    PetscErrorCode TaoSetObjectiveAndGradientRoutine(Tao tao, PetscErrorCode (*func)(Tao, Vec, PetscReal *, Vec, void*), void *ctx)
-
-// material ...
-//    ierr = TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,(void *)&user);CHKERRQ(ierr);
-//    ierr = TaoSetHessianRoutine(tao,H,H,FormHessian,(void*)&user);CHKERRQ(ierr);
-
-
-//    PetscInt n, i;
-//    n = hannf->nh + 1;
-
-// input X
-// W1, b1
-// S1 = W1 * X + [b1,...,b1]
-// H1 = sigma(S1), elementwise
-//    MatMatMult()
-//    MatMatMult(Mat A,Mat B,MatReuse scall,PetscReal fill,Mat *C)
-
-// hidden layers
-// S2 = W2 * H1 + [b2,...,b2]
-// H2 = sigma(S2), elementwise
-// ... and so on, until ...
-// output Y
-
-// diff to data
-//    hannf->Y - Y
-
-//    *f = 0.0;

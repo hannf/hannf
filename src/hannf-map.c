@@ -208,6 +208,9 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     Vec *h_all = hannf->h_all;
     VecScatter *h_scatter = hannf->h_scatter;
     PetscInt i, nh;
+    // scatter input vector x to all
+    VecScatterBegin(hannf->x_scatter, x, hannf->x_all, INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(hannf->x_scatter, x, hannf->x_all, INSERT_VALUES, SCATTER_FORWARD);
     // first layer
     // s[0] = W[0] * x + b[0]
     // dh[0], h[0] = sigma(s[0])
@@ -405,9 +408,6 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
     // restore h_all array
     VecRestoreArray(hannf->x_all, &x_all_array);
 
-    // gidx
-    PetscPrintf(hannf->comm, "gidx: %d\n", gidx);
-    
     // debug
     HANNFDebug(hannf, "HANNFMapGradient\n");
     PetscFunctionReturn(0);
