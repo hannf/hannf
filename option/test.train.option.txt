@@ -16,7 +16,7 @@
 #
 
 # debug
--HANNFDebug                       1
+-HANNFDebug                       0
 
 # network
 -HANNFType                        mlp
@@ -26,6 +26,8 @@
 # hidden layers
 -HANNFHiddenLayerCount            1
 -HANNFHiddenLayerNeuronCount      3
+#-HANNFHiddenLayerCount            2
+#-HANNFHiddenLayerNeuronCount      3,4
 #-HANNFHiddenLayerCount            3
 #-HANNFHiddenLayerNeuronCount      300,400,500
 #-HANNFHiddenLayerNeuronCount      3,4,5
@@ -33,12 +35,18 @@
 # training
 -HANNFTrainingDataInput            ../data/sensor_data_short.feature.petsc
 -HANNFTrainingDataOutput           ../data/sensor_data_short.class.petsc
+#-HANNFTrainingDataInput            ../data/sensor_data_all.feature.petsc
+#-HANNFTrainingDataOutput           ../data/sensor_data_all.class.petsc
 
 # training, optimization
+# lmvm nls ntr ntl cg tron owlqn bmrm blmvm bqpip gpcg nm pounders lcl ssils ssfls asils asfls ipm test
 -HANNF_tao_type                   cg
+#-HANNF_tao_type                   nm
+#-HANNF_tao_type                   lmvm
+-HANNF_tao_view
 -HANNF_tao_monitor
--HANNF_tao_max_it                 1
--HANNF_tao_max_funcs              1
+#-HANNF_tao_max_it                 1
+#-HANNF_tao_max_funcs              1
 
 
 

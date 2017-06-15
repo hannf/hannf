@@ -173,15 +173,7 @@ HANNFTrainInit(HANNF* hannf)
     // set from options
     TaoSetOptionsPrefix(hannf->tao, "HANNF_");
     TaoSetFromOptions(hannf->tao);
-    
-    
-    
-    // debug
-//    TaoSetMaximumIterations(hannf->tao, 1);
-//    TaoSetMaximumFunctionEvaluations(hannf->tao, 1);
-
-    
-    
+        
     // debug
     HANNFDebug(hannf, "HANNFTrainInit\n");
     PetscFunctionReturn(0);
@@ -235,11 +227,6 @@ HANNFTrain(HANNF* hannf)
 //    // weight the sum with one half
 //    *f = 0.5 * sum;
 //    // debug
-////    VecView(u, PETSC_VIEWER_STDOUT_WORLD);
-//    
-////    MatView(hannf->W[0], PETSC_VIEWER_STDOUT_WORLD);
-//    
-////    HANNFDebug(hannf, "%24.16e\n", *f);
 //    HANNFDebug(hannf, "HANNFObjective\n");
 //    PetscFunctionReturn(0);
 //}
@@ -256,6 +243,11 @@ HANNFObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
     PetscInt nt, nh, i;
     PetscReal norm, sum;
     Vec g_i;
+    
+//    VecView(u, PETSC_VIEWER_STDOUT_WORLD);
+//    VecView(hannf->mem, PETSC_VIEWER_STDOUT_WORLD);
+    VecCopy(u, hannf->mem);
+    
     // zero the entries of the gradient vector
     // create vector for the i_th component
     VecZeroEntries(g);
@@ -280,6 +272,10 @@ HANNFObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
         VecWAXPY(hannf->w[nh], -1.0, hannf->Y[i], hannf->h[nh]);
         VecNorm(hannf->w[nh], NORM_2, &norm);
         sum = sum + norm * norm;
+        
+//        VecView(hannf->h[nh], PETSC_VIEWER_STDOUT_WORLD);
+//        VecView(hannf->Y[i], PETSC_VIEWER_STDOUT_WORLD);
+        
         //
         // gradient
         //
