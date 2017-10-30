@@ -23,60 +23,63 @@
 #include "petsctao.h"
 
 /*
- *  HANNF type
+ *  HANNF network type
  */
-typedef const char* HANNFType;
-#define HANNF_TYPE_MLP "mlp"
+typedef const char* HANNFNetType;
+#define HANNF_NET_TYPE_FFNN "ffnn"
+
+/*
+ * HANNF network topology constraints
+ */
+#define HANNF_MAX_LAYER 65536
 
 /*
  *  HANNF context data type
 */
 typedef struct {
     // communication
-    MPI_Comm        comm;           // mpi context
-    PetscInt        nproc;          // global process count
-    PetscInt        myproc;         // local process count
+    MPI_Comm            comm;           // mpi context
+    PetscInt            nproc;          // global process count
+    PetscInt            iproc;          // local process number
     // debug/timing
-    PetscInt        debug;          // debug switch
-    PetscLogDouble  startTime;      // overall duration
-    PetscLogDouble  timeStamp;      // timing delta
+    PetscInt            debug;          // debug switch
+    PetscLogDouble      startTime;      // overall duration
+    PetscLogDouble      timeStamp;      // timing delta
     // network
-    HANNFType       type;           // network type
-    PetscInt        nin;            // neuron count input layer
-    PetscInt        nout;           // neuron count output layer
-    PetscInt        nh;             // hidden layer count
-    PetscInt        *nhi;           // neuron count per hidden layer
+    HANNFNetType        type;           // network type
+    PetscInt            nl;             // network layer count
+    PetscInt            *nnl;           // neuron count per network layer
     // load
-    PetscInt        *nrow_global;   // global row count per network layer
-    PetscInt        *nrow_local;    // local row count per network layer
-    PetscInt        *ncol;          // column count per network layer (matrix plus vector)
-    PetscInt        nmem_global;    // global length of storage vector
-    PetscInt        nmem_local;     // local length of storage vector
+    PetscInt            *nrow_global;   // global row count per network layer
+    PetscInt            *nrow_local;    // local row count per network layer
+    PetscInt            *ncol;          // column count per network layer (matrix plus vector)
+    PetscInt            nmem_global;    // global length of storage vector
+    PetscInt            nmem_local;     // local length of storage vector
     // mapping
-    Mat             *W;             // network matrices (n+1)
-    Vec             *b;             // network vectors (n+1)
-    Vec             *s;             // hidden layer, network input vector
-    Vec             *h;             // hidden layer, activated vector
-    Vec             *w;             // work vectors per layer
+    Mat                 *W;             // network matrices (n+1)
+    Vec                 *b;             // network vectors (n+1)
+    Vec                 *s;             // hidden layer, network input vector
+    Vec                 *h;             // hidden layer, activated vector
+    Vec                 *w;             // work vectors per layer
     // derivatives
-    VecScatter      *h_scatter;     // scatter context for h_all
-    Vec             *h_all;         // hidden layer vector, scattered to all
-    Vec             x;              // input vector x
-    VecScatter      x_scatter;      // scatter context for the input vector
-    Vec             x_all;          // input vector scattered to all
-    Vec             *dW;            // derivatives with respect to a W matrix, columnwise
-    Vec             *db;            // derivatives with respect to a b vector
-    Vec             *dh;            // derivative of activation function
-    Vec             mem;            // storage vector
+    VecScatter          *h_scatter;     // scatter context for h_all
+    Vec                 *h_all;         // hidden layer vector, scattered to all
+//    Vec                 x;              // input vector x
+//    VecScatter          x_scatter;      // scatter context for the input vector
+//    Vec                 x_all;          // input vector scattered to all
+    Vec                 *dW;            // derivatives with respect to a W matrix, columnwise
+    Vec                 *db;            // derivatives with respect to a b vector
+    Vec                 *dh;            // derivative of activation function
+    Vec                 mem;            // storage vector
     // training
-    PetscInt        nt;             // training data count (or sequence length)
-    Vec             *X;             // input
-    Vec             *Y;             // output
-    Tao             tao;            // optimization context
-    Vec             u;              // optimization initial/result vector
+    PetscInt            nt;             // training data count (or sequence length)
+    Vec                 *X;             // input
+    Vec                 *Y;             // output
+    Tao                 tao;            // optimization context
+    Vec                 u;              // optimization initial/result vector
     // work
-    Mat             XX;             // input work matrix
-    Mat             YY;             // output work matrix
+//    Mat                 XX;             // input work matrix
+//    Mat                 YY;             // output work matrix
 } HANNF;
 
 #endif /* HANNF_TYPE_H */

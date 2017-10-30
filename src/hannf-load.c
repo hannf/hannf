@@ -39,55 +39,40 @@ PetscErrorCode
 HANNFLoadInit(HANNF* hannf)
 {
     PetscFunctionBegin;
-    //
-    // W1,  (hannf->nhi[0], hannf->nin)   ; b1, h, s,  (hannf->nhi[0])
-    // W2,  (hannf->nhi[1], hannf->nhi[0]); b2, h, s,  (hannf->nhi[1])
+    // matrix and vector dimensions
+    // W1,  (hannf->nnl[1], hannf->nnl[0])  ; b1, h1, s1,  (hannf->nnl[0])
+    // W2,  (hannf->nnl[2], hannf->nnl[1])  ; b2, h2, s2,  (hannf->nnl[1])
     // ...
-    // Wnh, (hannf->nout, hannf->nhi[n-1]); bnh, h, s, (hannf->nout)
+    // Wnl-1, (hannf->nnl[nl], hannf->nl[n-1]); bnl, hnl, snl, (hannf->nnl[nl])
     //
     // work vars
     MPI_Comm comm = hannf->comm;
     PetscInt nproc;
-    PetscInt myproc;
+    PetscInt iproc;
     PetscInt nmax, i;
     PetscInt nmem_global = 0;
     PetscInt nmem_local = 0;
     PetscInt nrow_global, nrow_local, ncol;
     // determine process count and my process number
     MPI_Comm_size(comm, &nproc);
-    MPI_Comm_rank(comm, &myproc);
+    MPI_Comm_rank(comm, &iproc);
     // store
     hannf->nproc = nproc;
-    hannf->myproc = myproc;
+    hannf->iproc = iproc;
     // compute local and global sizes for later use
     // allocate memory for storage
-    nmax = hannf->nh + 1;
+    nmax = hannf->nl - 1;
     PetscMalloc(nmax*sizeof(PetscInt), &hannf->nrow_global);
     PetscMalloc(nmax*sizeof(PetscInt), &hannf->nrow_local);
     PetscMalloc(nmax*sizeof(PetscInt), &hannf->ncol);
     // loop over layers
-    for(i = 0; i < hannf->nh+1; i++)
+    for(i = 0; i < nmax; i++)
     {
-        // set sizes
-        if (i == 0)
-        {
-            // first hidden layer
-            nrow_global = hannf->nhi[i];
-            ncol = (hannf->nin + 1);
-        }
-        else if (i == hannf->nh)
-        {
-            // output layer
-            nrow_global = hannf->nout;
-            ncol = (hannf->nhi[i-1] + 1);
-        }
-        else
-        {
-            // layers inbetween
-            nrow_global = hannf->nhi[i];
-            // matrix W plus vector b
-            ncol = (hannf->nhi[i-1] + 1);
-        }
+        // set rows
+        nrow_global = hannf->nnl[i+1];
+        // set columns
+        // matrix W plus vector b
+        ncol = (hannf->nnl[i] + 1);
         // get petsc distribution
         nrow_local = PETSC_DECIDE;
         PetscSplitOwnership(comm, &nrow_local, &nrow_global);
@@ -107,7 +92,7 @@ HANNFLoadInit(HANNF* hannf)
     HANNFDebug(hannf, FSSD, "HANNFLoadInit", "nmem_global:", nmem_global);
     // debug, local
     if (hannf->debug > 0) {
-        PetscSynchronizedPrintf(comm, "%17s %-40s %18s %-8d %18s %-8d\n", " ", "HANNFLoadInit", "myproc:", myproc, "nmem_local:", nmem_local);
+        PetscSynchronizedPrintf(comm, "%17s %-40s %18s %-8d %18s %-8d\n", " ", "HANNFLoadInit", "iproc:", iproc, "nmem_local:", nmem_local);
         PetscSynchronizedFlush(comm, PETSC_STDOUT);
     }
     // debug

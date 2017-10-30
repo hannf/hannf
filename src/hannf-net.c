@@ -24,9 +24,9 @@ PetscErrorCode
 HANNFNetFinal(HANNF* hannf)
 {
     PetscFunctionBegin;
-    if (strcmp(hannf->type, HANNF_TYPE_MLP) == 0) {
+    if (strcmp(hannf->type, HANNF_NET_TYPE_FFNN) == 0) {
         // free hidden layer neuron count
-        PetscFree(hannf->nhi);
+        PetscFree(hannf->nnl);
     } else {
         // unkown HANNF type, abort execution
         char message[PETSC_MAX_PATH_LEN];
@@ -46,32 +46,37 @@ HANNFNetInit(HANNF* hannf)
     PetscFunctionBegin;
     char annType[PETSC_MAX_PATH_LEN];
     // get network type
-    HANNFUtilOptionsGetString(hannf, "-HANNFType", annType);
-    if (strcmp(annType, HANNF_TYPE_MLP) == 0) {
-        // HANNF_TYPE_MLP, "mlp", multi layer perceptron
-        PetscInt nmax;
+    HANNFUtilOptionsGetString(hannf, "-HANNFNetworkType", annType);
+    if (strcmp(annType, HANNF_NET_TYPE_FFNN) == 0) {
+        // HANNF_NET_TYPE_FFNN, "ffnn", feed forward neural network
+        PetscInt nmax = HANNF_MAX_LAYER;
+        PetscInt i;
+        PetscInt *nmaxl;
         // store type
-        hannf->type = HANNF_TYPE_MLP;
-        // input layer size
-        // output layer size
-        // hidden layer count
-        // hidden layer(s) size(s)
-        HANNFUtilOptionsGetInt(hannf, "-HANNFInputNeuronCount", &hannf->nin);
-        HANNFUtilOptionsGetInt(hannf, "-HANNFOutputNeuronCount", &hannf->nout);
-        HANNFUtilOptionsGetInt(hannf, "-HANNFHiddenLayerCount", &hannf->nh);
-        nmax = hannf->nh;
-        PetscMalloc(nmax * sizeof(PetscInt), &hannf->nhi);
-        HANNFUtilOptionsGetIntArray(hannf, "-HANNFHiddenLayerNeuronCount", &nmax, hannf->nhi);
+        hannf->type = HANNF_NET_TYPE_FFNN;
+        // network topology
+        // create maximum storage
+        PetscMalloc(nmax * sizeof(PetscInt), &nmaxl);
+        // read option
+        HANNFUtilOptionsGetIntArray(hannf, "-HANNFNetworkTopology", &nmax, nmaxl);
+        // store actual storage
+        hannf->nl = nmax;
+        // create work storage
+        PetscMalloc(nmax * sizeof(PetscInt), &hannf->nnl);
+        // copy values (ints)
+        for (i = 0; i < nmax; i++) {
+            hannf->nnl[i] = nmaxl[i];
+        }
+        // free maximum storage
+        PetscFree(nmaxl);
     } else {
         // unkown HANNF type, abort execution
         char message[PETSC_MAX_PATH_LEN];
-        sprintf(message, "Unknown HANNF type '%s'.", annType);
+        sprintf(message, "Unknown HANNF network type '%s'.", annType);
         HANNFFlag(PETSC_FALSE, message);
     }
     // debug
     HANNFDebug(hannf, "HANNFNetInit\n");
     PetscFunctionReturn(0);
 }
-
-
 

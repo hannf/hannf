@@ -26,8 +26,7 @@ main(int argc, char **args)
     // init petsc
     PetscInitialize(&argc, &args, PETSC_NULL, PETSC_NULL);
     PetscPushErrorHandler(PetscTraceBackErrorHandler, NULL);
-
-    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+//    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
     // check arguments
     if (argc >= 2) {
@@ -37,9 +36,8 @@ main(int argc, char **args)
         HANNF hannf;
         PetscTime(&hannf.startTime);
         HANNFInitWithOptionFile(&hannf, args[1]);
-        HANNFTrain(&hannf);
+//        HANNFTrain(&hannf);
         HANNFFinal(&hannf);
-    
     } else {
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR:\n");
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR: %s\n", "Please provide an option file!");
