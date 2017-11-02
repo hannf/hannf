@@ -171,7 +171,7 @@ HANNFTrainInit(HANNF* hannf)
     
     // set option prefix
     // set from options
-    TaoSetOptionsPrefix(hannf->tao, "HANNF_");
+    TaoSetOptionsPrefix(hannf->tao, "HANNFTraining_");
     TaoSetFromOptions(hannf->tao);
         
     // debug

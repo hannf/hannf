@@ -16,7 +16,7 @@
 #
 
 # training
-HANNF_TRAIN_PROGRAM = hannf-train.exe
+HANNF_TRAIN_PROGRAM = hannf.exe
 HANNF_TRAIN_OBJCS = \
 	src/hannf-debug.o \
 	src/hannf-util.o \
@@ -24,11 +24,9 @@ HANNF_TRAIN_OBJCS = \
 	src/hannf-net.o \
 	src/hannf-load.o \
 	src/hannf-map.o \
-	src/hannf-main-train.o
+	src/hannf.o
 
-#\
 #	src/hannf-train.o \
-
 
 CLEANFILES = $(HANNF_TRAIN_OBJCS) $(HANNF_TRAIN_PROGRAM)
 

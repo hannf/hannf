@@ -16,7 +16,7 @@
  *
  */
 
-#include "hannf-main-train.h"
+#include "hannf.h"
 
 #undef  __FUNCT__
 #define __FUNCT__ "main"
@@ -25,7 +25,8 @@ main(int argc, char **args)
 {
     // init petsc
     PetscInitialize(&argc, &args, PETSC_NULL, PETSC_NULL);
-    PetscPushErrorHandler(PetscTraceBackErrorHandler, NULL);
+    PetscPushErrorHandler(PetscAbortErrorHandler, NULL);
+//    PetscPushErrorHandler(PetscTraceBackErrorHandler, NULL);
 //    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
 
     // check arguments

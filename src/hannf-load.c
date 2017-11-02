@@ -47,9 +47,10 @@ HANNFLoadInit(HANNF* hannf)
     //
     // work vars
     MPI_Comm comm = hannf->comm;
+    PetscInt nl = hannf->nl;
     PetscInt nproc;
     PetscInt iproc;
-    PetscInt nmax, i;
+    PetscInt i;
     PetscInt nmem_global = 0;
     PetscInt nmem_local = 0;
     PetscInt nrow_global, nrow_local, ncol;
@@ -61,17 +62,16 @@ HANNFLoadInit(HANNF* hannf)
     hannf->iproc = iproc;
     // compute local and global sizes for later use
     // allocate memory for storage
-    nmax = hannf->nl - 1;
-    PetscMalloc(nmax*sizeof(PetscInt), &hannf->nrow_global);
-    PetscMalloc(nmax*sizeof(PetscInt), &hannf->nrow_local);
-    PetscMalloc(nmax*sizeof(PetscInt), &hannf->ncol);
+    PetscMalloc((nl-1)*sizeof(PetscInt), &hannf->nrow_global);
+    PetscMalloc((nl-1)*sizeof(PetscInt), &hannf->nrow_local);
+    PetscMalloc((nl-1)*sizeof(PetscInt), &hannf->ncol);
     // loop over layers
-    for(i = 0; i < nmax; i++)
+    for(i = 0; i < (nl-1); i++)
     {
         // set rows
-        nrow_global = hannf->nnl[i+1];
         // set columns
         // matrix W plus vector b
+        nrow_global = hannf->nnl[i+1];
         ncol = (hannf->nnl[i] + 1);
         // get petsc distribution
         nrow_local = PETSC_DECIDE;

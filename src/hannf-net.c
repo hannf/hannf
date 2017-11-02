@@ -49,26 +49,27 @@ HANNFNetInit(HANNF* hannf)
     HANNFUtilOptionsGetString(hannf, "-HANNFNetworkType", annType);
     if (strcmp(annType, HANNF_NET_TYPE_FFNN) == 0) {
         // HANNF_NET_TYPE_FFNN, "ffnn", feed forward neural network
-        PetscInt nmax = HANNF_MAX_LAYER;
-        PetscInt i;
-        PetscInt *nmaxl;
+        PetscInt nlmax = HANNF_NET_MAX_LAYER;
+        PetscInt nl, *nnl, i;
         // store type
         hannf->type = HANNF_NET_TYPE_FFNN;
         // network topology
         // create maximum storage
-        PetscMalloc(nmax * sizeof(PetscInt), &nmaxl);
+        PetscMalloc(nlmax * sizeof(PetscInt), &nnl);
         // read option
-        HANNFUtilOptionsGetIntArray(hannf, "-HANNFNetworkTopology", &nmax, nmaxl);
-        // store actual storage
-        hannf->nl = nmax;
+        HANNFUtilOptionsGetIntArray(hannf, "-HANNFNetworkTopology", &nlmax, nnl);
+        // get actual storage
+        nl = nlmax;
         // create work storage
-        PetscMalloc(nmax * sizeof(PetscInt), &hannf->nnl);
+        PetscMalloc(nl * sizeof(PetscInt), &hannf->nnl);
         // copy values (ints)
-        for (i = 0; i < nmax; i++) {
-            hannf->nnl[i] = nmaxl[i];
+        for (i = 0; i < nl; i++) {
+            hannf->nnl[i] = nnl[i];
         }
-        // free maximum storage
-        PetscFree(nmaxl);
+        // free temporal storage
+        PetscFree(nnl);
+        // store no of layers in
+        hannf->nl = nl;
     } else {
         // unkown HANNF type, abort execution
         char message[PETSC_MAX_PATH_LEN];

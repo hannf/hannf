@@ -31,7 +31,7 @@ typedef const char* HANNFNetType;
 /*
  * HANNF network topology constraints
  */
-#define HANNF_MAX_LAYER 65536
+#define HANNF_NET_MAX_LAYER 65536
 
 /*
  *  HANNF context data type
@@ -56,33 +56,35 @@ typedef struct {
     PetscInt            nmem_global;    // global length of storage vector
     PetscInt            nmem_local;     // local length of storage vector
     // mapping
-    Mat                 *W;             // network matrices (n+1)
-    Vec                 *b;             // network vectors (n+1)
+    Mat                 *W;             // network matrices
+    Vec                 *b;             // network vectors
     Vec                 *s;             // hidden layer, network input vector
     Vec                 *h;             // hidden layer, activated vector
     Vec                 *w;             // work vectors per layer
     // derivatives
     VecScatter          *h_scatter;     // scatter context for h_all
     Vec                 *h_all;         // hidden layer vector, scattered to all
-//    Vec                 x;              // input vector x
-//    VecScatter          x_scatter;      // scatter context for the input vector
-//    Vec                 x_all;          // input vector scattered to all
     Vec                 *dW;            // derivatives with respect to a W matrix, columnwise
     Vec                 *db;            // derivatives with respect to a b vector
     Vec                 *dh;            // derivative of activation function
-    Vec                 mem;            // storage vector
+    Vec                 umem;           // storage vector
     // training
-    PetscInt            nt;             // training data count (or sequence length)
-    Vec                 *X;             // input
-    Vec                 *Y;             // output
     Tao                 tao;            // optimization context
+    PetscInt            nt;             // training data count (or sequence length)
+    Vec                 *x;             // input
+    Vec                 *y;             // output
     Vec                 u;              // optimization initial/result vector
-    // work
-//    Mat                 XX;             // input work matrix
-//    Mat                 YY;             // output work matrix
 } HANNF;
 
 #endif /* HANNF_TYPE_H */
 
 
 
+
+
+//    Vec                 x;              // input vector x
+//    VecScatter          x_scatter;      // scatter context for the input vector
+//    Vec                 x_all;          // input vector scattered to all
+// work
+//    Mat                 XX;             // input work matrix
+//    Mat                 YY;             // output work matrix

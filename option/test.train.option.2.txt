@@ -18,38 +18,39 @@
 # debug
 -HANNFDebug                         1
 
-# network
-# ffnn, (deep) feed forward neral network
-#   mlp, multi layer perceptron
+# network type
+# ffnn, (deep) feed forward neural network
 # rnn, (deep) recurrent neural network
 # cnn, (deep) convolutional neural network
-#-HANNFNetworkType                  	mlp
--HANNFNetworkType                      ffnn
+-HANNFNetworkType                   ffnn
 
-# training
 # proben1, building
 -HANNFNetworkTopology              	3,14
 # -HANNFNetTopology                   3,3,14,14
 # -HANNFNetTopology                   3,8,14
+
+# training data
 -HANNFTrainingDataIn               	../data/proben1/proben1/building/building1.dt.train.in.petsc
 -HANNFTrainingDataOut              	../data/proben1/proben1/building/building1.dt.train.out.petsc
 # map
 -HANNFMapDataIn                     ../data/proben1/proben1/building/building1.dt.test.in.petsc
-#-HANNFMapDataOutFileFormat
+-HANNFMapDataOut                    ../data/proben1/proben1/building/building1.dt.test.in.map.out.petsc
 
 # mnist
 -HANNFNetworkTopology              	10,784
 # -HANNFNetworkTopology               10,397,784
 # -HANNFNetworkTopology               10,198,397,784
 # -HANNFNetworkTopology               10,100,198,397,784
-#-HANNFNetworkTopology               10,55,99,198,397,784
+# -HANNFNetworkTopology               10,55,99,198,397,784
+
+# training data
 -HANNFTrainingDataIn               	../data/mnist/train-images-idx3-ubyte.in.petsc
 -HANNFTrainingDataOut              	../data/mnist/train-labels-idx1-ubyte.out.petsc
 # map
 -HANNFMapDataIn                     ../data/mnist/t10k-images-idx3-ubyte.in.petsc
-#-HANNFMapDataOutFileFormat
+-HANNFMapDataOut                    ../data/mnist/t10k-images-idx3-ubyte.in.map.out.petsc
 
-# training, optimization
+# optimization, training
 # bp,	back propagation
 -HANNFTrainingType					bp
 -HANNFTraining_bp_max_it			100
@@ -67,26 +68,9 @@
 -HANNFTraining_tao_max_funcs        1
 
 # output, W_i, b_i
--HANNFNetworkOutFileFormat         	W_%02d,b_%02d
-
+-HANNFNetworkOutFileFormat          W_%02d,b_%02d
 # input, W_i, b_i
--HANNFNetworkInFileFormat          	W_%02d,b_%02d
+-HANNFNetworkInFileFormat           W_%02d,b_%02d
 
 
 
-
-
-
-
-#-HANNFActivation
-
-# i/o
-#-HANNFInputNeuronCount              14
-#-HANNFOutputNeuronCount             3
-
-# hidden layers
-#-HANNFHiddenLayerCount              2
-#-HANNFHiddenLayerNeuronCount        14,3
-#-HANNFNetTopology                   3,3,14,14
-#-HANNFNetTopology                   3,14            # proben1, building
-#-HANNFNetTopology                   10,784          # mnist
