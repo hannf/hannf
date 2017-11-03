@@ -29,9 +29,14 @@ typedef const char* HANNFNetType;
 #define HANNF_NET_TYPE_FFNN "ffnn"
 
 /*
- * HANNF network topology constraints
+ *  HANNF network topology constraints
  */
-#define HANNF_NET_MAX_LAYER 65536
+#define HANNF_NET_MAX_LAYER 65535
+
+/*
+ *  HANNF training constraints
+ */
+#define HANNF_TRAIN_MAX_IN_OUT 65535
 
 /*
  *  HANNF context data type
@@ -73,7 +78,6 @@ typedef struct {
     PetscInt            nt;             // training data count (or sequence length)
     Vec                 *x;             // input
     Vec                 *y;             // output
-    Vec                 u;              // optimization initial/result vector
 } HANNF;
 
 #endif /* HANNF_TYPE_H */
@@ -81,6 +85,8 @@ typedef struct {
 
 
 
+
+//    Vec                 u;              // optimization initial/result vector
 
 //    Vec                 x;              // input vector x
 //    VecScatter          x_scatter;      // scatter context for the input vector

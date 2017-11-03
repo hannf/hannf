@@ -25,10 +25,11 @@ main(int argc, char **args)
 {
     // init petsc
     PetscInitialize(&argc, &args, PETSC_NULL, PETSC_NULL);
-    PetscPushErrorHandler(PetscAbortErrorHandler, NULL);
+//    PetscPushErrorHandler(PetscAbortErrorHandler, NULL);
+    PetscPushErrorHandler(PetscMPIAbortErrorHandler, NULL);
 //    PetscPushErrorHandler(PetscTraceBackErrorHandler, NULL);
-//    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
-
+//    PetscPushSignalHandler(PetscSignalHandlerDefault, PETSC_NULL);
+    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
     // check arguments
     if (argc >= 2) {
         // create hannf data type
@@ -47,6 +48,7 @@ main(int argc, char **args)
 
     // final petsc
     PetscPopErrorHandler();
+//    PetscPopSignalHandler();
     PetscFinalize();
     return 0;
 }

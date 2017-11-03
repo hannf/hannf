@@ -25,7 +25,7 @@ HANNFMapFinal(HANNF* hannf)
 {
     PetscFunctionBegin;
     // work vars
-    PetscInt    nl = hannf->nl;
+    PetscInt nl = hannf->nl;
     // destroy net matrices and vectors
     // forward
     MatDestroyMatrices(nl-1, &hannf->W);
@@ -248,130 +248,54 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
     PetscInt *ncol = hannf->ncol;
     PetscInt nl = hannf->nl;
     PetscInt i, j;
-    
     // get the array from the gradient vector
     // set the index counter to the local length, i.e. one off the last entry
     VecGetArray(g, &garray);
     gidx = hannf->nmem_local;
-
-    // copy y to w[nl-2]
-    VecCopy(y, w[nl-2]);
-    
+    // copy y to w[nl-1]
+    VecCopy(y, w[nl-1]);
     // go backward through the chain of network layers
-    
-    
-    
-//    // last layer
-//    // db_nh = y .* sigma'(s_nh)
-//    //       = y .* dh_nh
-//    // set index to last layer
-//    // compute offset for the last vector b
-//    // place g array into db_i vector
-//    i = hannf->nh;
-//    gidx = gidx - nrow_local[i];
-//    VecPlaceArray(db[i], &garray[gidx]);
-//    // compute the gradient w.r.t. the last vector b
-//    VecPointwiseMult(db[i], y, dh[i]);
-//
-//    // dW_nh = (db_nh * h_{nh-1}^T), dyadic product
-//    // we treat the derivative w.r.t. the last matrix W, columnwise
-//    // get h_all array
-//    // !!! index is i-1 !!!
-//    VecGetArray(h_all[i-1], &h_all_array);
-//    // loop over vector entries, backwards!
-//    for(j = ncol[i]-2; j >= 0; j--)
-//    {
-//        // compute offset for the matrix W
-//        // place g array into work vector dW_i
-//        gidx = gidx - nrow_local[i];
-//        VecPlaceArray(dW[i], &garray[gidx]);
-//        // W_ij = h_{i-1}j*db_i
-//        VecCopy(db[i], dW[i]);
-//        VecScale(dW[i], h_all_array[j]);
-//        // reset array
-//        VecResetArray(dW[i]);
-//    }
-//    // restore h_all array
-//    VecRestoreArray(h_all[i-1], &h_all_array);
-//    // prepare the next step
-//    // w[i-1]^T = db[i]^T * W[i]
-//    MatMultTranspose(W[i], db[i], w[i-1]);
-//    // reset db_i vector array
-//    VecResetArray(db[i]);
-//    // layers inbetween
-    
     for(i = nl-2; i >= 0; i--)
     {
         // compute offset for the last vector b
         // place g array into db_i vector
         gidx = gidx - nrow_local[i];
         VecPlaceArray(db[i], &garray[gidx]);
-        // db_i = db_{i+1} * W_{i+1} .* sigma'(s_i)
-        //      = db_{i+1} * W_{i+1} .* dh_i
-        //      = w_i .* dh_i
+        // db_i = db_{i+1} * W_{i+1} .* sigma'(s_{i+1})
+        //      = db_{i+1} * W_{i+1} .* dh_{i+1}
+        //      = w_{i+1} .* dh_{i+1}
         // compute the gradient w.r.t. the last vector b
-        VecPointwiseMult(db[i], w[i], dh[i]);
-        // dW_i = (db_i * h_{i-1}^T), dyadic product
+        VecPointwiseMult(db[i], w[i+1], dh[i+1]);
+        // dW_i = (db_i * h_{i}^T), dyadic product
         // we treat the derivative w.r.t. the last matrix W, columnwise
         // get h_all array
         // !!! index is i-1 !!!
-        VecGetArray(h_all[i-1], &h_all_array);
+        VecGetArray(h_all[i], &h_all_array);
         // loop over vector entries, backwards!
+        // ncol stores no. of columns of W and b combined,
+        // thus the start is ncol-2
         for(j = ncol[i]-2; j >= 0; j--)
         {
             // compute offset for the matrix W
             // place g array into work vector dW_i
             gidx = gidx - nrow_local[i];
             VecPlaceArray(dW[i], &garray[gidx]);
-            // W_ij = W_ij + h_{i-1}j*db_i
+            // W_ij = W_ij + h_ij*db_i
             VecCopy(db[i], dW[i]);
             VecScale(dW[i], h_all_array[j]);
             // reset array
             VecResetArray(dW[i]);
         }
         // restore h_all array
-        VecRestoreArray(h_all[i-1], &h_all_array);
+        VecRestoreArray(h_all[i], &h_all_array);
         // prepare the next step
-        // w[i-1]^T = bd[i]^T * W[i]
-        MatMultTranspose(W[i], db[i], w[i-1]);
+        // w[i]^T = bd[i]^T * W[i]
+        MatMultTranspose(W[i], db[i], w[i]);
         // reset db_i vector array
         VecResetArray(db[i]);
     }
-
-//    // first layer
-//    // db_0 = db_1 * W_1 .* sigma'(s_0)
-//    //      = db_{i+1} * W_{i+1} .* dh_i
-//    //      = w_0 .* dh_0
-//    // compute offset for the last vector b
-//    // place g array into db_i vector
-//    i = 0;
-//    gidx = gidx - nrow_local[i];
-//    VecPlaceArray(db[i], &garray[gidx]);
-//    // compute the gradient w.r.t. the last vector b
-//    VecPointwiseMult(db[i], w[i], dh[i]);
-//    // dW_0 = db_0 * x^T
-//    // get x_all array
-//    VecGetArray(hannf->x_all, &x_all_array);
-//    // loop over vector entries, backwards!
-//    for(j = ncol[i]-2; j >= 0; j--)
-//    {
-//        // compute offset for the matrix W
-//        // place g array into work vector dW_i
-//        gidx = gidx - nrow_local[i];
-//        VecPlaceArray(dW[i], &garray[gidx]);
-//        // W_ij = x_j * db_i
-//        VecCopy(db[i], dW[i]);
-//        VecScale(dW[i], x_all_array[j]);
-//        // reset array
-//        VecResetArray(dW[i]);
-//    }
-//    // restore h_all array
-//    VecRestoreArray(hannf->x_all, &x_all_array);
-//    // reset db_i vector array
-//    VecResetArray(db[i]);
-    
     // restore gradient array
-    
+    VecRestoreArray(g, &garray);
     // debug
     HANNFDebug(hannf, "HANNFMapGradient\n");
     PetscFunctionReturn(0);
@@ -420,3 +344,81 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
 
 
 //    PetscScalar *x_all_array;
+
+
+
+
+
+
+//    // last layer
+//    // db_nh = y .* sigma'(s_nh)
+//    //       = y .* dh_nh
+//    // set index to last layer
+//    // compute offset for the last vector b
+//    // place g array into db_i vector
+//    i = hannf->nh;
+//    gidx = gidx - nrow_local[i];
+//    VecPlaceArray(db[i], &garray[gidx]);
+//    // compute the gradient w.r.t. the last vector b
+//    VecPointwiseMult(db[i], y, dh[i]);
+//
+//    // dW_nh = (db_nh * h_{nh-1}^T), dyadic product
+//    // we treat the derivative w.r.t. the last matrix W, columnwise
+//    // get h_all array
+//    // !!! index is i-1 !!!
+//    VecGetArray(h_all[i-1], &h_all_array);
+//    // loop over vector entries, backwards!
+//    for(j = ncol[i]-2; j >= 0; j--)
+//    {
+//        // compute offset for the matrix W
+//        // place g array into work vector dW_i
+//        gidx = gidx - nrow_local[i];
+//        VecPlaceArray(dW[i], &garray[gidx]);
+//        // W_ij = h_{i-1}j*db_i
+//        VecCopy(db[i], dW[i]);
+//        VecScale(dW[i], h_all_array[j]);
+//        // reset array
+//        VecResetArray(dW[i]);
+//    }
+//    // restore h_all array
+//    VecRestoreArray(h_all[i-1], &h_all_array);
+//    // prepare the next step
+//    // w[i-1]^T = db[i]^T * W[i]
+//    MatMultTranspose(W[i], db[i], w[i-1]);
+//    // reset db_i vector array
+//    VecResetArray(db[i]);
+//    // layers inbetween
+
+
+
+//    // first layer
+//    // db_0 = db_1 * W_1 .* sigma'(s_0)
+//    //      = db_{i+1} * W_{i+1} .* dh_i
+//    //      = w_0 .* dh_0
+//    // compute offset for the last vector b
+//    // place g array into db_i vector
+//    i = 0;
+//    gidx = gidx - nrow_local[i];
+//    VecPlaceArray(db[i], &garray[gidx]);
+//    // compute the gradient w.r.t. the last vector b
+//    VecPointwiseMult(db[i], w[i], dh[i]);
+//    // dW_0 = db_0 * x^T
+//    // get x_all array
+//    VecGetArray(hannf->x_all, &x_all_array);
+//    // loop over vector entries, backwards!
+//    for(j = ncol[i]-2; j >= 0; j--)
+//    {
+//        // compute offset for the matrix W
+//        // place g array into work vector dW_i
+//        gidx = gidx - nrow_local[i];
+//        VecPlaceArray(dW[i], &garray[gidx]);
+//        // W_ij = x_j * db_i
+//        VecCopy(db[i], dW[i]);
+//        VecScale(dW[i], x_all_array[j]);
+//        // reset array
+//        VecResetArray(dW[i]);
+//    }
+//    // restore h_all array
+//    VecRestoreArray(hannf->x_all, &x_all_array);
+//    // reset db_i vector array
+//    VecResetArray(db[i]);

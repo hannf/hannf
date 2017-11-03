@@ -24,9 +24,8 @@ HANNF_TRAIN_OBJCS = \
 	src/hannf-net.o \
 	src/hannf-load.o \
 	src/hannf-map.o \
+	src/hannf-train.o \
 	src/hannf.o
-
-#	src/hannf-train.o \
 
 CLEANFILES = $(HANNF_TRAIN_OBJCS) $(HANNF_TRAIN_PROGRAM)
 

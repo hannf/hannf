@@ -63,9 +63,19 @@ HANNFNetInit(HANNF* hannf)
         // create work storage
         PetscMalloc(nl * sizeof(PetscInt), &hannf->nnl);
         // copy values (ints)
-        for (i = 0; i < nl; i++) {
-            hannf->nnl[i] = nnl[i];
+        //
+        //  !!! ATTENTION !!!
+        //
+        // we copy the values in reverse order
+        // for a user provided int array,
+        // we assume, the RIGHT MOST is the INPUT
+        // the LEFT MOST is the OUTPUT
+        //
+        MPI_Comm comm = hannf->comm;
+        for (i = (nl-1); i >= 0; i--) {
+            hannf->nnl[(nl-1) - i] = nnl[i];
         }
+        PetscPrintf(comm, "\n");
         // free temporal storage
         PetscFree(nnl);
         // store no of layers in
