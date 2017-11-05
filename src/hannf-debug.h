@@ -21,6 +21,13 @@
 
 #include "hannf-type.h"
 
+// debug levels
+#define kDebugLevel0 0
+#define kDebugLevel1 1
+#define kDebugLevel2 2
+#define kDebugLevel3 3
+#define kDebugLevel4 4
+
 // formats
 #define F2S     "%-35s %18s\n"                                                      // 2 x string
 #define F2SE    "%-35s %18s %-8e\n"                                                 // 2 x string, 1 x double
@@ -39,7 +46,7 @@
 #define FSSD    "%-35s %18s %-8d\n"
 #define FSSS    "%-35s %18s %-35s\n"                                                // 3 x string
 
-extern PetscErrorCode HANNFDebug(HANNF*, const char*, ...);
+extern PetscErrorCode HANNFDebug(HANNF*, PetscInt, const char*, ...);
 extern PetscErrorCode HANNFFlag(PetscBool, char*);
 
 #endif /* HANNF_DEBUG_H */

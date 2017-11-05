@@ -18,6 +18,8 @@
 
 #include "hannf-util.h"
 
+#define kDebugLevel kDebugLevel1
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFUtilOptionsGetInt"
 PetscErrorCode
@@ -30,7 +32,7 @@ HANNFUtilOptionsGetInt(HANNF* hannf, const char* optionName, PetscInt* ivalue)
     sprintf(message, "Please provide the '%s' option", optionName);
     HANNFFlag(flag, message);
     // debug
-    HANNFDebug(hannf, F4SD, "HANNFUtilOptionsGetInt", "optionName:", optionName, "value:", *ivalue);
+    HANNFDebug(hannf, kDebugLevel, F4SD, "HANNFUtilOptionsGetInt", "optionName:", optionName, "value:", *ivalue);
     PetscFunctionReturn(0);
 }
 
@@ -46,7 +48,7 @@ HANNFUtilOptionsGetString(HANNF* hannf, const char *optionName, char *string)
     sprintf(message, "Please provide the '%s' option", optionName);
     HANNFFlag(flag, message);
     // debug
-    HANNFDebug(hannf, F5S, "HANNFUtilOptionsGetString", "optionName:", optionName, "value:", string);
+    HANNFDebug(hannf, kDebugLevel, F5S, "HANNFUtilOptionsGetString", "optionName:", optionName, "value:", string);
     PetscFunctionReturn(0);
 }
 
@@ -64,7 +66,7 @@ HANNFUtilOptionsGetIntArray(HANNF* hannf, const char* optionName, PetscInt* nmax
     HANNFFlag(flag, message);
     for (i=0; i<(*nmax); i++)
     {
-        HANNFDebug(hannf, F4SD, "HANNFUtilOptionsGetIntArray", "optionName:", optionName, "value:", ivalue[i]);
+        HANNFDebug(hannf, kDebugLevel, F4SD, "HANNFUtilOptionsGetIntArray", "optionName:", optionName, "value:", ivalue[i]);
     }
     // debug
     PetscFunctionReturn(0);

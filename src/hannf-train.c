@@ -18,6 +18,8 @@
 
 #include "hannf-train.h"
 
+#define kDebugLevel kDebugLevel2
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFTrainDataFinal"
 PetscErrorCode
@@ -32,7 +34,7 @@ HANNFTrainDataFinal(HANNF* hannf)
     PetscFree(hannf->x);
     PetscFree(hannf->y);
     // debug
-    HANNFDebug(hannf, "HANNFTrainDataFinal\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrainDataFinal\n");
     PetscFunctionReturn(0);
 }
 
@@ -75,7 +77,7 @@ HANNFTrainDataInit(HANNF* hannf)
     PetscViewerDestroy(&in_viewer);
     PetscViewerDestroy(&out_viewer);
     // debug
-    HANNFDebug(hannf, "HANNFTrainDataInit\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrainDataInit\n");
     PetscFunctionReturn(0);
 }
 
@@ -90,7 +92,7 @@ HANNFTrainFinal(HANNF* hannf)
     // final training data
     HANNFTrainDataFinal(hannf);
     // debug
-    HANNFDebug(hannf, "HANNFTrainFinal\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrainFinal\n");
     PetscFunctionReturn(0);
 }
 
@@ -113,7 +115,7 @@ HANNFTrainInit(HANNF* hannf)
     TaoSetOptionsPrefix(hannf->tao, "HANNFTraining_");
     TaoSetFromOptions(hannf->tao);
     // debug
-    HANNFDebug(hannf, "HANNFTrainInit\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrainInit\n");
     PetscFunctionReturn(0);
 }
 
@@ -126,7 +128,7 @@ HANNFTrain(HANNF* hannf)
     // train
     TaoSolve(hannf->tao);
     // debug
-    HANNFDebug(hannf, "HANNFTrain\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrain\n");
     PetscFunctionReturn(0);
 }
 
@@ -186,7 +188,7 @@ HANNFObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
     // destroy work vector
     VecDestroy(&g_i);
     // debug
-    HANNFDebug(hannf, "HANNFObjectiveAndGradient\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFObjectiveAndGradient\n");
     PetscFunctionReturn(0);
 }
 

@@ -34,11 +34,6 @@ typedef const char* HANNFNetType;
 #define HANNF_NET_MAX_LAYER 65535
 
 /*
- *  HANNF training constraints
- */
-#define HANNF_TRAIN_MAX_IN_OUT 65535
-
-/*
  *  HANNF context data type
 */
 typedef struct {

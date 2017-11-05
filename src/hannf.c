@@ -45,7 +45,6 @@ main(int argc, char **args)
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR: %s\n", "Please provide an option file!");
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR:\n");
     }
-
     // final petsc
     PetscPopErrorHandler();
 //    PetscPopSignalHandler();

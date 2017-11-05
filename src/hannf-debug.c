@@ -21,10 +21,10 @@
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFDebug"
 PetscErrorCode
-HANNFDebug(HANNF* hannf, const char *format, ...)
+HANNFDebug(HANNF* hannf, PetscInt level, const char *format, ...)
 {
     PetscFunctionBegin;
-    if (hannf->debug > 0) {
+    if (hannf->debug >= level) {
         PetscMPIInt rank;
         MPI_Comm_rank(hannf->comm, &rank);
         if (!rank) {

@@ -18,6 +18,8 @@
 
 #include "hannf-load.h"
 
+#define kDebugLevel kDebugLevel1
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFLoadFinal"
 PetscErrorCode
@@ -29,7 +31,7 @@ HANNFLoadFinal(HANNF* hannf)
     PetscFree(hannf->nrow_local);
     PetscFree(hannf->ncol);
     // debug
-    HANNFDebug(hannf, "HANNFLoadFinal\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFLoadFinal\n");
     PetscFunctionReturn(0);
 }
 
@@ -88,15 +90,15 @@ HANNFLoadInit(HANNF* hannf)
     hannf->nmem_local = nmem_local;
     hannf->nmem_global = nmem_global;
     // debug, global
-    HANNFDebug(hannf, FSSD, "HANNFLoadInit", "nproc:", nproc);
-    HANNFDebug(hannf, FSSD, "HANNFLoadInit", "nmem_global:", nmem_global);
+    HANNFDebug(hannf, kDebugLevel, FSSD, "HANNFLoadInit", "nproc:", nproc);
+    HANNFDebug(hannf, kDebugLevel, FSSD, "HANNFLoadInit", "nmem_global:", nmem_global);
     // debug, local
-    if (hannf->debug > 0) {
+    if (hannf->debug >= kDebugLevel) {
         PetscSynchronizedPrintf(comm, "%17s %-35s %18s %-8d %18s %-8d\n", " ", "HANNFLoadInit", "iproc:", iproc, "nmem_local:", nmem_local);
         PetscSynchronizedFlush(comm, PETSC_STDOUT);
     }
     // debug
-    HANNFDebug(hannf, "HANNFLoadInit\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFLoadInit\n");
     PetscFunctionReturn(0);
 }
 

@@ -18,6 +18,8 @@
 
 #include "hannf-net.h"
 
+#define kDebugLevel kDebugLevel1
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFNetFinal"
 PetscErrorCode
@@ -34,7 +36,7 @@ HANNFNetFinal(HANNF* hannf)
         HANNFFlag(PETSC_FALSE, message);
     }
     // debug
-    HANNFDebug(hannf, "HANNFNetFinal\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFNetFinal\n");
     PetscFunctionReturn(0);
 }
 
@@ -71,11 +73,9 @@ HANNFNetInit(HANNF* hannf)
         // we assume, the RIGHT MOST is the INPUT
         // the LEFT MOST is the OUTPUT
         //
-        MPI_Comm comm = hannf->comm;
         for (i = (nl-1); i >= 0; i--) {
             hannf->nnl[(nl-1) - i] = nnl[i];
         }
-        PetscPrintf(comm, "\n");
         // free temporal storage
         PetscFree(nnl);
         // store no of layers in
@@ -87,7 +87,7 @@ HANNFNetInit(HANNF* hannf)
         HANNFFlag(PETSC_FALSE, message);
     }
     // debug
-    HANNFDebug(hannf, "HANNFNetInit\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFNetInit\n");
     PetscFunctionReturn(0);
 }
 

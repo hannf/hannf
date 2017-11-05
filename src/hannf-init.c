@@ -18,6 +18,8 @@
 
 #include "hannf-init.h"
 
+#define kDebugLevel kDebugLevel1
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFInitWithOptionFile"
 PetscErrorCode
@@ -40,7 +42,7 @@ HANNFInitWithOptionFile(HANNF* hannf, const char* filepath)
     // wait for all processors
     PetscBarrier(PETSC_NULL);
     // debug
-    HANNFDebug(hannf, FSSS, "HANNFInitWithOptionFile", "filepath:", filepath);
+    HANNFDebug(hannf, kDebugLevel, FSSS, "HANNFInitWithOptionFile", "filepath:", filepath);
     PetscFunctionReturn(0);
 }
 
@@ -58,7 +60,7 @@ HANNFFinal(HANNF* hannf)
     HANNFLoadFinal(hannf);
     HANNFNetFinal(hannf);
     // debug
-    HANNFDebug(hannf, "HANNFFinal\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFFinal\n");
     PetscFunctionReturn(0);
 }
 

@@ -18,6 +18,8 @@
 
 #include "hannf-map.h"
 
+#define kDebugLevel kDebugLevel2
+
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFMapFinal"
 PetscErrorCode
@@ -46,7 +48,7 @@ HANNFMapFinal(HANNF* hannf)
     // destroy storage/work vector
     VecDestroy(&hannf->umem);
     // debug
-    HANNFDebug(hannf, "HANNFMapFinal\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFMapFinal\n");
     PetscFunctionReturn(0);
 }
 
@@ -140,7 +142,7 @@ HANNFMapInit(HANNF* hannf)
     // restore mem vector
     VecRestoreArray(hannf->umem, &memarray);
     // debug
-    HANNFDebug(hannf, "HANNFMapInit\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFMapInit\n");
     PetscFunctionReturn(0);
 }
 
@@ -173,7 +175,7 @@ HANNFMapNeuronActivate(HANNF *hannf, Vec dh, Vec h, Vec s)
     VecRestoreArray(h, &harray);
     VecRestoreArray(s, &sarray);
     // debug
-    HANNFDebug(hannf, "HANNFMapNeuronActivate\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFMapNeuronActivate\n");
     PetscFunctionReturn(0);
 }
 
@@ -188,7 +190,7 @@ HANNFMapNeuronReceive(HANNF* hannf, Vec s, Mat W, Vec b, Vec x)
     // s = W * x + b
     MatMultAdd(W, x, b, s);
     // debug
-    HANNFDebug(hannf, "HANNFMapNeuronReceive\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFMapNeuronReceive\n");
     PetscFunctionReturn(0);
 }
 
@@ -224,7 +226,7 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     // copy h[nl-1] to y
     VecCopy(h[nl-1], y);
     // debug
-    HANNFDebug(hannf, "HANNFMap\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFMap\n");
     PetscFunctionReturn(0);
 }
 
@@ -297,7 +299,7 @@ HANNFMapGradient(HANNF* hannf, Vec y, Vec x, Vec g)
     // restore gradient array
     VecRestoreArray(g, &garray);
     // debug
-    HANNFDebug(hannf, "HANNFMapGradient\n");
+    HANNFDebug(hannf, kDebugLevel, "HANNFMapGradient\n");
     PetscFunctionReturn(0);
 }
 

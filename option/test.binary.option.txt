@@ -24,45 +24,7 @@
 # cnn, (deep) convolutional neural network
 -HANNFNetworkType                   ffnn
 
-# proben1, building
--HANNFNetworkTopology              	3,14
-# -HANNFNetTopology                   3,3,14,14
-# -HANNFNetTopology                   3,8,14
-
-# training data
--HANNFTrainingDataCount             2104
--HANNFTrainingDataIn               	../data/proben1/proben1/building/building1.dt.train.in.petsc
--HANNFTrainingDataOut              	../data/proben1/proben1/building/building1.dt.train.out.petsc
-# map
--HANNFMapDataCount                  1052
--HANNFMapDataIn                     ../data/proben1/proben1/building/building1.dt.test.in.petsc
--HANNFMapDataOut                    ../data/proben1/proben1/building/building1.dt.test.in.map.out.petsc
-
-# mnist
--HANNFNetworkTopology              	10,784
-# -HANNFNetworkTopology               10,397,784
-# -HANNFNetworkTopology               10,198,397,784
-# -HANNFNetworkTopology               10,100,198,397,784
--HANNFNetworkTopology               10,55,99,198,397,784
-
-# training data
--HANNFTrainingDataCount             60000
--HANNFTrainingDataIn               	../data/mnist/train-images-idx3-ubyte.in.petsc
--HANNFTrainingDataOut              	../data/mnist/train-labels-idx1-ubyte.out.petsc
-# map
--HANNFMapDataCount                  10000
--HANNFMapDataIn                     ../data/mnist/t10k-images-idx3-ubyte.in.petsc
--HANNFMapDataOut                    ../data/mnist/t10k-images-idx3-ubyte.in.map.out.petsc
-
-# home automation
--HANNFNetworkTopology               12,19
-#-HANNFNetworkTopology               12,3,19
-# training data
--HANNFTrainingDataCount             2
--HANNFTrainingDataIn                ../../__attic__/data/sensor_data_short.feature.petsc
--HANNFTrainingDataOut               ../../__attic__/data/sensor_data_short.class.petsc
-
-# home automation
+# binary test
 -HANNFNetworkTopology               2,2
 # training data
 -HANNFTrainingDataCount             3
@@ -83,7 +45,7 @@
 -HANNFTraining_tao_type            	cg
 -HANNFTraining_tao_view
 -HANNFTraining_tao_monitor
-#-HANNFTraining_tao_max_it          	10
+#-HANNFTraining_tao_max_it           20
 #-HANNFTraining_tao_max_funcs        1
 
 # output, W_i, b_i
