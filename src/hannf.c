@@ -34,11 +34,12 @@ main(int argc, char **args)
     if (argc >= 2) {
         // create hannf data type
         // set timing start
-        // init, train and final
+        // init, train, store and final
         HANNF hannf;
         PetscTime(&hannf.startTime);
         HANNFInitWithOptionFile(&hannf, args[1]);
         HANNFTrain(&hannf);
+        HANNFTrainView(&hannf);
         HANNFFinal(&hannf);
     } else {
         PetscPrintf(PETSC_COMM_WORLD, "### ERROR:\n");

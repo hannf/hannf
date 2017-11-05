@@ -45,13 +45,14 @@
 -HANNFTraining_tao_type            	cg
 -HANNFTraining_tao_view
 -HANNFTraining_tao_monitor
-#-HANNFTraining_tao_max_it           20
+-HANNFTraining_tao_max_it           20
 #-HANNFTraining_tao_max_funcs        1
 
 # output, W_i, b_i
--HANNFNetworkOutFileFormat          W_%02d,b_%02d
+-HANNFTrainingOutFileFormat         work/W_%02d.petsc,work/b_%02d.petsc
+
 # input, W_i, b_i
--HANNFNetworkInFileFormat           W_%02d,b_%02d
+-HANNFMapInFileFormat               work/W_%02d.petsc,work/b_%02d.petsc
 
 
 

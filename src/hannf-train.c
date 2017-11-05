@@ -18,6 +18,54 @@
 
 #include "hannf-train.h"
 
+#define kDebugLevel kDebugLevel1
+
+#undef  __FUNCT__
+#define __FUNCT__ "HANNFTrainView"
+PetscErrorCode
+HANNFTrainView(HANNF* hannf)
+{
+    PetscFunctionBegin;
+    MPI_Comm comm = hannf->comm;
+    PetscBool flag = PETSC_FALSE;
+    PetscInt nl = hannf->nl;
+    PetscInt i, nmax = 2;
+    char filePath[PETSC_MAX_PATH_LEN];
+    char *outFileFormat[PETSC_MAX_PATH_LEN];
+    PetscViewer viewer;
+    // read formats
+    PetscOptionsGetStringArray(PETSC_NULL, PETSC_NULL, "-HANNFTrainingOutFileFormat", outFileFormat, &nmax, &flag);
+    if (flag == PETSC_TRUE)
+    {
+        HANNFDebug(hannf, kDebugLevel, F5S, "HANNFTrainView", "optionName:", "-HANNFTrainingOutFileFormat", "value:", outFileFormat[0]);
+        HANNFDebug(hannf, kDebugLevel, F5S, "HANNFTrainView", "optionName:", "-HANNFTrainingOutFileFormat", "value:", outFileFormat[1]);
+        // loop over topology
+        for (i = 0; i < (nl-1); i++)
+        {
+            // matrices
+            sprintf(filePath, outFileFormat[0], i);
+            PetscViewerBinaryOpen(comm, filePath, FILE_MODE_WRITE, &viewer);
+            PetscViewerPushFormat(viewer,PETSC_VIEWER_NATIVE);
+            MatView(hannf->W[i], viewer);
+//            MatView(hannf->W[i], PETSC_VIEWER_STDOUT_WORLD);
+            PetscViewerDestroy(&viewer);
+            HANNFDebug(hannf, kDebugLevel, F3S, "HANNFTrainView", "filePath:", filePath);
+            // vectors
+            sprintf(filePath, outFileFormat[1], i);
+            PetscViewerBinaryOpen(comm, filePath, FILE_MODE_WRITE, &viewer);
+            PetscViewerPushFormat(viewer,PETSC_VIEWER_NATIVE);
+            VecView(hannf->b[i], viewer);
+//            VecView(hannf->b[i], PETSC_VIEWER_STDOUT_WORLD);
+            PetscViewerDestroy(&viewer);
+            HANNFDebug(hannf, kDebugLevel, F3S, "HANNFTrainView", "filePath:", filePath);
+        }
+    }
+    // debug
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrainView\n");
+    PetscFunctionReturn(0);
+}
+
+#undef kDebugLevel
 #define kDebugLevel kDebugLevel2
 
 #undef  __FUNCT__

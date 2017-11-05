@@ -80,9 +80,10 @@
 -HANNFTraining_tao_max_funcs        1
 
 # output, W_i, b_i
--HANNFNetworkOutFileFormat          W_%02d,b_%02d
+-HANNFTrainingOutFileFormat         W_%02d.petsc,b_%02d.petsc
+
 # input, W_i, b_i
--HANNFNetworkInFileFormat           W_%02d,b_%02d
+-HANNFMapInFileFormat               W_%02d.petsc,b_%02d.petsc
 
 
 
