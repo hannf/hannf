@@ -62,6 +62,13 @@
 -HANNFTrainingDataIn                ../../__attic__/data/sensor_data_short.feature.petsc
 -HANNFTrainingDataOut               ../../__attic__/data/sensor_data_short.class.petsc
 
+# home automation
+-HANNFNetworkTopology               2,2
+# training data
+-HANNFTrainingDataCount             3
+-HANNFTrainingDataIn                ../data/binary/binary.feature.petsc
+-HANNFTrainingDataOut               ../data/binary/binary.class.petsc
+
 # optimization, training
 # bp,	back propagation
 -HANNFTrainingType					bp
@@ -76,8 +83,8 @@
 -HANNFTraining_tao_type            	cg
 -HANNFTraining_tao_view
 -HANNFTraining_tao_monitor
--HANNFTraining_tao_max_it          	1
--HANNFTraining_tao_max_funcs        1
+#-HANNFTraining_tao_max_it          	10
+#-HANNFTraining_tao_max_funcs        1
 
 # output, W_i, b_i
 -HANNFNetworkOutFileFormat          W_%02d,b_%02d

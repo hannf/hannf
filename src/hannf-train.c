@@ -140,208 +140,55 @@ HANNFObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
     HANNF* hannf = (HANNF*) ctx;
     PetscFunctionBegin;
     // work vars
-    PetscInt nt, nh, i;
+    PetscInt nt = hannf->nt;
+    PetscInt nl = hannf->nl;
+    PetscInt i;
     PetscReal norm, sum;
     Vec g_i;
-    
-////    VecView(u, PETSC_VIEWER_STDOUT_WORLD);
-////    VecView(hannf->mem, PETSC_VIEWER_STDOUT_WORLD);
-//    VecCopy(u, hannf->mem);
-    
+    // copy parameter vector to memory work vector
+    VecCopy(u, hannf->umem);
     // zero the entries of the gradient vector
     // create vector for the i_th component
     VecZeroEntries(g);
-//    VecDuplicate(g, &g_i);
-//    // prepare loop
-//    sum = 0.0;
-//    nt = hannf->nt;
-//    nh = hannf->nh;
-//    // loop over training data
-//    for(i = 0; i < nt; i++)
-//    {
-//        //
-//        // objective
-//        //
-//        // feed forward
-//        // mathematically from right to left
-//        // map training data input x to y
-//        HANNFMap(hannf, hannf->h[nh], hannf->X[i]);
-//        // compute difference
-//        // compute norm of difference
-//        // sum up
-//        VecWAXPY(hannf->w[nh], -1.0, hannf->Y[i], hannf->h[nh]);
-//        VecNorm(hannf->w[nh], NORM_2, &norm);
-//        sum = sum + norm * norm;
-//        
-////        VecView(hannf->h[nh], PETSC_VIEWER_STDOUT_WORLD);
-////        VecView(hannf->Y[i], PETSC_VIEWER_STDOUT_WORLD);
-//        
-//        //
-//        // gradient
-//        //
-//        // backwards
-//        // mathematically from left to right
-//        // compute gradient w.r.t. the i_th component of the cost function
-//        HANNFMapGradient(hannf, hannf->w[nh], hannf->X[i], g_i);
-//        // add to gradient vector
-//        // g = g + 1.0 * g_i
-//        VecAXPY(g, 1.0, g_i);
-//    }
-//    // weight the sum with one half
-//    *f = 0.5 * sum;
-//    // destroy work vector
-//    VecDestroy(&g_i);
+    VecDuplicate(g, &g_i);
+    // prepare loop
+    sum = 0.0;
+    // loop over training data
+    for(i = 0; i < nt; i++)
+    {
+        //
+        // objective
+        //
+        // feed forward
+        // mathematically from right to left
+        // map training data input x to y
+        HANNFMap(hannf, hannf->h[nl-1], hannf->x[i]);
+        // compute difference
+        // compute norm of difference
+        // sum up
+        VecWAXPY(hannf->w[nl-1], -1.0, hannf->y[i], hannf->h[nl-1]);
+        VecNorm(hannf->w[nl-1], NORM_2, &norm);
+        sum = sum + norm * norm;
+        //
+        // gradient
+        //
+        // backwards
+        // mathematically from left to right
+        // compute gradient w.r.t. the i_th component of the cost function
+        // is case if least squares, input is the difference, here w[nl-1]
+        HANNFMapGradient(hannf, hannf->w[nl-1], hannf->x[i], g_i);
+        // add to gradient vector
+        // g = g + 1.0 * g_i
+        VecAXPY(g, 1.0, g_i);
+    }
+    // weight the sum with one half
+    *f = 0.5 * sum;
+    // destroy work vector
+    VecDestroy(&g_i);
     // debug
     HANNFDebug(hannf, "HANNFObjectiveAndGradient\n");
     PetscFunctionReturn(0);
 }
 
 
-
-
-//    // init variable for computation of derivative
-//    VecDuplicate(hannf->Y[0], &hannf->ydiff);
-//    VecAssemblyBegin(hannf->ydiff);
-//    VecAssemblyEnd(hannf->ydiff);
-
-// create the optimization vector, use the work vector xx
-//    VecDuplicate(hannf->mem, &hannf->u);
-//    VecSetRandom(hannf->u, PETSC_NULL);
-//    VecAssemblyBegin(hannf->u);
-//    VecAssemblyEnd(hannf->u);
-
-
-
-
-//#undef  __FUNCT__
-//#define __FUNCT__ "HANNFObjective"
-//PetscErrorCode
-//HANNFObjective(Tao tao, Vec u, PetscReal *f, void *ctx)
-//{
-//    // get context
-//    HANNF* hannf = (HANNF*) ctx;
-//    PetscFunctionBegin;
-//    // work vars
-//    PetscInt nt, nh, i;
-//    PetscReal norm, sum;
-//    // prepare loop
-//    sum = 0.0;
-//    nt = hannf->nt;
-//    nh = hannf->nh;
-//    // loop over training data
-//    for(i = 0; i < nt; i++)
-//    {
-//        //
-//        // objective
-//        //
-//        // feed forward
-//        // mathematically from right to left
-//        // map training data input x to y
-//        HANNFMap(hannf, hannf->h[nh], hannf->X[i]);
-//        // compute difference
-//        // compute norm of difference
-//        // sum up
-//        VecWAXPY(hannf->w[nh], -1.0, hannf->Y[i], hannf->h[nh]);
-//        VecNorm(hannf->w[nh], NORM_2, &norm);
-//        sum = sum + norm * norm;
-//    }
-//    // weight the sum with one half
-//    *f = 0.5 * sum;
-//    // debug
-//    HANNFDebug(hannf, "HANNFObjective\n");
-//    PetscFunctionReturn(0);
-//}
-
-
-//    TaoSetObjectiveRoutine(hannf->tao, HANNFObjective, (void*)hannf);
-
-
-
-// destroy optimization vector
-//    VecDestroy(&hannf->u);
-//    // derivative
-//    VecDestroy(&hannf->ydiff);
-
-
-
-
-
-
-
-//    // create work matrix XX
-//    // set type
-//    MatCreate(comm, &hannf->XX);
-//    MatSetType(hannf->XX, MATDENSE);
-
-
-//    // load matrix
-//    PetscViewerBinaryOpen(comm, filePath, FILE_MODE_READ, &viewer);
-//    MatLoad(hannf->XX, viewer);
-//    PetscViewerDestroy(&viewer);
-//    // determine sequence length
-//    MatGetSize(hannf->XX, PETSC_NULL, &hannf->nt);
-
-
-
-//    // create X vectors from XX matrix
-//    // get local row count
-//    // use XX matrix array
-//    PetscMalloc(hannf->nt*sizeof(Vec), &hannf->X);
-//    MatGetLocalSize(hannf->XX, &nrow_local, PETSC_NULL);
-//    MatDenseGetArray(hannf->XX, &mat_array);
-//    for (i = 0; i < hannf->nt; i++) {
-//        // create a vector that will be multiplied against the first W
-//        MatCreateVecs(hannf->W[0], &hannf->X[i], PETSC_NULL);
-//        // place the matrix array in the vector
-//        VecPlaceArray(hannf->X[i], &mat_array[i*nrow_local]);
-//        // assemble vector
-//        VecAssemblyBegin(hannf->X[i]);
-//        VecAssemblyEnd(hannf->X[i]);
-//    }
-//    MatDenseRestoreArray(hannf->XX, &mat_array);
-
-
-
-//    //
-//    //  YY
-//    //
-//    // read in training data output
-//    HANNFUtilOptionsGetString(hannf, "-HANNFTrainingDataOutput", filePath);
-//    // create work matrix YY
-//    // set type
-//    MatCreate(comm, &hannf->YY);
-//    MatSetType(hannf->YY, MATDENSE);
-//    // load matrix
-//    PetscViewerBinaryOpen(comm, filePath, FILE_MODE_READ, &viewer);
-//    MatLoad(hannf->YY, viewer);
-//    PetscViewerDestroy(&viewer);
-//    // determine sequence length
-//    MatGetSize(hannf->YY, PETSC_NULL, &hannf->nt);
-//    // debug
-//    HANNFDebug(hannf, FSSD, "HANNFTrainDataInit", "nt:", hannf->nt);
-//    // create Y vectors from YY matrix
-//    // get local row count
-//    // use YY matrix array
-//    PetscMalloc(hannf->nt*sizeof(Vec), &hannf->Y);
-//    MatGetLocalSize(hannf->YY, &nrow_local, PETSC_NULL);
-//    MatDenseGetArray(hannf->YY, &mat_array);
-//    for (i = 0; i < hannf->nt; i++) {
-//        // create a vector that will be the result of multiplication with the last W
-//        MatCreateVecs(hannf->W[hannf->nh], PETSC_NULL, &hannf->Y[i]);
-//        // place the matrix array in the vector
-//        VecPlaceArray(hannf->Y[i], &mat_array[i*nrow_local]);
-//        // assemble vector
-//        VecAssemblyBegin(hannf->Y[i]);
-//        VecAssemblyEnd(hannf->Y[i]);
-//    }
-//    MatDenseRestoreArray(hannf->YY, &mat_array);
-
-
-
-
-
-//    VecDestroyVecs(hannf->nt, &hannf->Y);
-//    // destroy training data matrices
-//    MatDestroy(&hannf->XX);
-//    MatDestroy(&hannf->YY);
 
