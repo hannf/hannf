@@ -68,6 +68,8 @@ typedef struct {
     Vec                 *db;            // derivatives with respect to a b vector
     Vec                 *dh;            // derivative of activation function
     Vec                 umem;           // storage vector
+    Vec                 ub;             // upper bounds
+    Vec                 lb;             // lower bounds
     // training
     Tao                 tao;            // optimization context
     PetscInt            nt;             // training data count (or sequence length)
