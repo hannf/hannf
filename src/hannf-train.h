@@ -29,8 +29,8 @@ extern PetscErrorCode HANNFTrainDataFinal(HANNF*);
 
 extern PetscErrorCode HANNFTrain(HANNF*);
 extern PetscErrorCode HANNFTrainObjectiveAndGradient(Tao, Vec, PetscReal*, Vec, void*);
-extern PetscErrorCode HANNFTrainObjective(Tao, Vec, PetscReal*, void*);
-extern PetscErrorCode HANNFTrainGradient(Tao, Vec, Vec, void*);
+//extern PetscErrorCode HANNFTrainObjective(Tao, Vec, PetscReal*, void*);
+//extern PetscErrorCode HANNFTrainGradient(Tao, Vec, Vec, void*);
 
 extern PetscErrorCode HANNFTrainView(HANNF*);
 

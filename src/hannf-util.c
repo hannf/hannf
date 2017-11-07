@@ -32,7 +32,7 @@ HANNFUtilOptionsGetInt(HANNF* hannf, const char* optionName, PetscInt* ivalue)
     sprintf(message, "Please provide the '%s' option", optionName);
     HANNFFlag(flag, message);
     // debug
-    HANNFDebug(hannf, kDebugLevel, F4SD, "HANNFUtilOptionsGetInt", "optionName:", optionName, "value:", *ivalue);
+    HANNFDebug(hannf, kDebugLevel, FSSSSD, "HANNFUtilOptionsGetInt", "optionName:", optionName, "value:", *ivalue);
     PetscFunctionReturn(0);
 }
 
@@ -66,7 +66,7 @@ HANNFUtilOptionsGetIntArray(HANNF* hannf, const char* optionName, PetscInt* nmax
     HANNFFlag(flag, message);
     for (i=0; i<(*nmax); i++)
     {
-        HANNFDebug(hannf, kDebugLevel, F4SD, "HANNFUtilOptionsGetIntArray", "optionName:", optionName, "value:", ivalue[i]);
+        HANNFDebug(hannf, kDebugLevel, FSSSSD, "HANNFUtilOptionsGetIntArray", "optionName:", optionName, "value:", ivalue[i]);
     }
     // debug
     PetscFunctionReturn(0);

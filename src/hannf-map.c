@@ -18,7 +18,7 @@
 
 #include "hannf-map.h"
 
-#define kDebugLevel kDebugLevel2
+#define kDebugLevel kDebugLevel3
 
 #undef  __FUNCT__
 #define __FUNCT__ "HANNFMapFinal"
@@ -212,8 +212,8 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
     PetscInt i;
     // copy x into h[0]
     VecCopy(x, h[0]);
-    // loop over layers (minus one)
-    for(i = 0; i < (nl-1); i++)
+    // loop over layers (minus two)
+    for(i = 0; i < (nl-2); i++)
     {
         // scatter to all
         VecScatterBegin(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
@@ -223,6 +223,19 @@ HANNFMap(HANNF* hannf, Vec y, Vec x)
         HANNFMapNeuronReceive(hannf, s[i], W[i], b[i], h[i]);
         HANNFMapNeuronActivate(hannf, dh[i+1], h[i+1], s[i]);
     }
+    // last layer
+    i = (nl-2);
+    // scatter to all
+    VecScatterBegin(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(h_scatter[i], h[i], h_all[i], INSERT_VALUES, SCATTER_FORWARD);
+    // receive, do not activate
+    // derivative is identity
+    // s[i] = W[i] * h[i] + b[i]
+    // h[i+1] = s[i]
+    // dh[i+1] = [1.0, ..., 1.0]
+    HANNFMapNeuronReceive(hannf, s[i], W[i], b[i], h[i]);
+    VecCopy(s[i], h[i+1]);
+    VecSet(dh[i+1], 1.0);
     // copy h[nl-1] to y
     VecCopy(h[nl-1], y);
     // debug

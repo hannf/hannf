@@ -29,13 +29,13 @@
 #define kDebugLevel4 4
 
 // formats
-#define F2S         "%-35s %18s\n"                                                      // 2 x string
-#define F2SE        "%-35s %18s %-8e\n"                                                 // 2 x string, 1 x double
-#define F3S         "%-35s %18s %-35s\n"                                                // 3 x string
-#define F2SD        "%-35s %18s %-8d\n"                                                 // 2 x string, 1 x int
+#define FSS         "%-35s %18s\n"                                                      // 2 x string
+#define FSSE        "%-35s %18s %-8e\n"                                                 // 2 x string, 1 x double
+#define FSSS        "%-35s %18s %-35s\n"                                                // 3 x string
+#define FSSD        "%-35s %18s %-8d\n"                                                 // 2 x string, 1 x int
 #define FSSDSE      "%-35s %18s %-8d %14s %-8e\n"                                       // 2 x string, 1 x int, 1 x string, 1 x double
 #define FS2SESD     "%-35s %18s %-8e %14s %-8d %14s %-8e %14s %-8d\n"
-#define F4SD        "%-35s %18s %-35s %14s %-8d\n"                                      // 4 x string, 1 x int
+#define FSSSSD      "%-35s %18s %-35s %14s %-8d\n"                                      // 4 x string, 1 x int
 #define F4SE        "%-35s %18s %-35s %14s %-8e\n"                                      // 4 x string, 1 x double
 #define F5S         "%-35s %18s %-35s %14s %-35s\n"                                     // 5 x string
 #define FS5SD       "%-35s %18s %-8d, %14s %-8d, %14s %-8d, %14s %-8d, %14s %-8d\n"     // 1 x string, 5 x (1 x string, 1 x int)
@@ -43,8 +43,6 @@
 #define FDSEE       "%0004d %s %.12e %.12e\n"
 #define FSSDSD      "%-35s %18s %-8d %18s %-8d\n"
 #define FSSDSDSD    "%-35s %18s %-8d, %14s %-8d, %14s %-8d\n"
-#define FSSD        "%-35s %18s %-8d\n"
-#define FSSS        "%-35s %18s %-35s\n"                                                // 3 x string
 
 extern PetscErrorCode HANNFDebug(HANNF*, PetscInt, const char*, ...);
 extern PetscErrorCode HANNFDebugSynchronizedFSSDSD(HANNF*, PetscInt, const char*, const char*, PetscInt, const char*, PetscInt);

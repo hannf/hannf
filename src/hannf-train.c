@@ -49,7 +49,7 @@ HANNFTrainView(HANNF* hannf)
             MatView(hannf->W[i], viewer);
 //            MatView(hannf->W[i], PETSC_VIEWER_STDOUT_WORLD);
             PetscViewerDestroy(&viewer);
-            HANNFDebug(hannf, kDebugLevel, F3S, "HANNFTrainView", "filePath:", filePath);
+            HANNFDebug(hannf, kDebugLevel, FSSS, "HANNFTrainView", "filePath:", filePath);
             // vectors
             sprintf(filePath, outFileFormat[1], i);
             PetscViewerBinaryOpen(comm, filePath, FILE_MODE_WRITE, &viewer);
@@ -57,7 +57,7 @@ HANNFTrainView(HANNF* hannf)
             VecView(hannf->b[i], viewer);
 //            VecView(hannf->b[i], PETSC_VIEWER_STDOUT_WORLD);
             PetscViewerDestroy(&viewer);
-            HANNFDebug(hannf, kDebugLevel, F3S, "HANNFTrainView", "filePath:", filePath);
+            HANNFDebug(hannf, kDebugLevel, FSSS, "HANNFTrainView", "filePath:", filePath);
         }
         PetscFree(outFileFormat[0]);
         PetscFree(outFileFormat[1]);
@@ -162,7 +162,7 @@ HANNFTrainInit(HANNF* hannf)
     TaoCreate(hannf->comm, &hannf->tao);
     TaoSetInitialVector(hannf->tao, hannf->umem);
 //    TaoSetObjectiveRoutine(hannf->tao, HANNFTrainObjective, (void*)hannf);
-//    TaoSetGradientRoutine(hannf->tao, HANNFTrainGradient, (void*)hannf); !!! still not correct
+//    TaoSetGradientRoutine(hannf->tao, HANNFTrainGradient, (void*)hannf); //!!! still not correct
     TaoSetObjectiveAndGradientRoutine(hannf->tao, HANNFTrainObjectiveAndGradient, (void*)hannf);
     // constraints, bounds, [0,1]
     VecDuplicate(hannf->umem, &hannf->ub);
@@ -193,90 +193,6 @@ HANNFTrain(HANNF* hannf)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "HANNFTrainGradient"
-PetscErrorCode
-HANNFTrainGradient(Tao tao, Vec u, Vec g, void *ctx)
-{
-    // get context
-    HANNF* hannf = (HANNF*) ctx;
-    PetscFunctionBegin;
-    // work vars
-    PetscInt nt = hannf->nt;
-    PetscInt nl = hannf->nl;
-    PetscInt i;
-    Vec g_i;
-    // copy parameter vector to memory work vector
-    VecCopy(u, hannf->umem);
-    // zero the entries of the gradient vector
-    // create vector for the i_th component
-    VecZeroEntries(g);
-    VecDuplicate(g, &g_i);
-    // loop over training data
-    for(i = 0; i < nt; i++)
-    {
-        //
-        // gradient
-        //
-        // backwards
-        // mathematically from left to right
-        // compute gradient w.r.t. the i_th component of the cost function
-        // is case if least squares, input is the difference, here w[nl-1]
-        // compute difference
-        VecWAXPY(hannf->w[nl-1], -1.0, hannf->y[i], hannf->h[nl-1]);
-        HANNFMapGradient(hannf, hannf->w[nl-1], hannf->x[i], g_i);
-        // add to gradient vector
-        // g = g + 1.0 * g_i
-        VecAXPY(g, 1.0, g_i);
-    }
-    // destroy work vector
-    VecDestroy(&g_i);
-    // debug
-    HANNFDebug(hannf, kDebugLevel, "HANNFTrainGradient\n");
-    PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "HANNFTrainObjective"
-PetscErrorCode
-HANNFTrainObjective(Tao tao, Vec u, PetscReal *f, void *ctx)
-{
-    // get context
-    HANNF* hannf = (HANNF*) ctx;
-    PetscFunctionBegin;
-    // work vars
-    PetscInt nt = hannf->nt;
-    PetscInt nl = hannf->nl;
-    PetscInt i;
-    PetscReal norm, sum;
-    // copy parameter vector to memory work vector
-    VecCopy(u, hannf->umem);
-    // prepare loop
-    sum = 0.0;
-    // loop over training data
-    for(i = 0; i < nt; i++)
-    {
-        //
-        // objective
-        //
-        // feed forward
-        // mathematically from right to left
-        // map training data input x to y
-        HANNFMap(hannf, hannf->h[nl-1], hannf->x[i]);
-        // compute difference
-        // compute norm of difference
-        // sum up
-        VecWAXPY(hannf->w[nl-1], -1.0, hannf->y[i], hannf->h[nl-1]);
-        VecNorm(hannf->w[nl-1], NORM_2, &norm);
-        sum = sum + norm * norm;
-    }
-    // weight the sum with one half
-    *f = 0.5 * sum;
-    // debug
-    HANNFDebug(hannf, kDebugLevel, "HANNFTrainObjective\n");
-    PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "HANNFTrainObjectiveAndGradient"
 PetscErrorCode
 HANNFTrainObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
@@ -292,6 +208,7 @@ HANNFTrainObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
     Vec g_i;
     // copy parameter vector to memory work vector
     VecCopy(u, hannf->umem);
+//    VecView(u, PETSC_VIEWER_STDOUT_WORLD);
     // zero the entries of the gradient vector
     // create vector for the i_th component
     VecZeroEntries(g);
@@ -308,6 +225,10 @@ HANNFTrainObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
         // mathematically from right to left
         // map training data input x to y
         HANNFMap(hannf, hannf->h[nl-1], hannf->x[i]);
+        
+//        VecView(hannf->x[i], PETSC_VIEWER_STDOUT_WORLD);
+//        VecView(hannf->h[nl-1], PETSC_VIEWER_STDOUT_WORLD);
+
         // compute difference
         // compute norm of difference
         // sum up
@@ -331,9 +252,95 @@ HANNFTrainObjectiveAndGradient(Tao tao, Vec u, PetscReal *f, Vec g, void *ctx)
     // destroy work vector
     VecDestroy(&g_i);
     // debug
-    HANNFDebug(hannf, kDebugLevel, "HANNFTrainObjectiveAndGradient\n");
+//    HANNFDebug(hannf, kDebugLevel, "HANNFTrainObjectiveAndGradient\n");
+    HANNFDebug(hannf, kDebugLevel, FSSE, "HANNFTrainObjectiveAndGradient", "objective:", *f);
     PetscFunctionReturn(0);
 }
+
+//#undef  __FUNCT__
+//#define __FUNCT__ "HANNFTrainGradient"
+//PetscErrorCode
+//HANNFTrainGradient(Tao tao, Vec u, Vec g, void *ctx)
+//{
+//    // get context
+//    HANNF* hannf = (HANNF*) ctx;
+//    PetscFunctionBegin;
+//    // work vars
+//    PetscInt nt = hannf->nt;
+//    PetscInt nl = hannf->nl;
+//    PetscInt i;
+//    Vec g_i;
+//    // copy parameter vector to memory work vector
+//    VecCopy(u, hannf->umem);
+//    // zero the entries of the gradient vector
+//    // create vector for the i_th component
+//    VecZeroEntries(g);
+//    VecDuplicate(g, &g_i);
+//    // loop over training data
+//    for(i = 0; i < nt; i++)
+//    {
+//        //
+//        // gradient
+//        //
+//        // backwards
+//        // mathematically from left to right
+//        // compute gradient w.r.t. the i_th component of the cost function
+//        // is case if least squares, input is the difference, here w[nl-1]
+//        // compute difference
+//        VecWAXPY(hannf->w[nl-1], -1.0, hannf->y[i], hannf->h[nl-1]);
+//        HANNFMapGradient(hannf, hannf->w[nl-1], hannf->x[i], g_i);
+//        // add to gradient vector
+//        // g = g + 1.0 * g_i
+//        VecAXPY(g, 1.0, g_i);
+//    }
+//    // destroy work vector
+//    VecDestroy(&g_i);
+//    // debug
+//    HANNFDebug(hannf, kDebugLevel, "HANNFTrainGradient\n");
+//    PetscFunctionReturn(0);
+//}
+//
+//#undef  __FUNCT__
+//#define __FUNCT__ "HANNFTrainObjective"
+//PetscErrorCode
+//HANNFTrainObjective(Tao tao, Vec u, PetscReal *f, void *ctx)
+//{
+//    // get context
+//    HANNF* hannf = (HANNF*) ctx;
+//    PetscFunctionBegin;
+//    // work vars
+//    PetscInt nt = hannf->nt;
+//    PetscInt nl = hannf->nl;
+//    PetscInt i;
+//    PetscReal norm, sum;
+//    // copy parameter vector to memory work vector
+//    VecCopy(u, hannf->umem);
+//    // prepare loop
+//    sum = 0.0;
+//    // loop over training data
+//    for(i = 0; i < nt; i++)
+//    {
+//        //
+//        // objective
+//        //
+//        // feed forward
+//        // mathematically from right to left
+//        // map training data input x to y
+//        HANNFMap(hannf, hannf->h[nl-1], hannf->x[i]);
+//        // compute difference
+//        // compute norm of difference
+//        // sum up
+//        VecWAXPY(hannf->w[nl-1], -1.0, hannf->y[i], hannf->h[nl-1]);
+//        VecNorm(hannf->w[nl-1], NORM_2, &norm);
+//        sum = sum + norm * norm;
+//    }
+//    // weight the sum with one half
+//    *f = 0.5 * sum;
+//    // debug
+////    HANNFDebug(hannf, kDebugLevel, "HANNFTrainObjective\n");
+//    HANNFDebug(hannf, kDebugLevel, FSSE, "HANNFTrainObjective", "objective:", *f);
+//    PetscFunctionReturn(0);
+//}
 
 
 
