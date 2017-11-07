@@ -67,6 +67,19 @@ HANNFTrainView(HANNF* hannf)
     PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "HANNFTrain"
+PetscErrorCode
+HANNFTrain(HANNF* hannf)
+{
+    PetscFunctionBegin;
+    // train
+    TaoSolve(hannf->tao);
+    // debug
+    HANNFDebug(hannf, kDebugLevel, "HANNFTrain\n");
+    PetscFunctionReturn(0);
+}
+
 #undef kDebugLevel
 #define kDebugLevel kDebugLevel2
 
@@ -176,19 +189,6 @@ HANNFTrainInit(HANNF* hannf)
     TaoSetFromOptions(hannf->tao);
     // debug
     HANNFDebug(hannf, kDebugLevel, "HANNFTrainInit\n");
-    PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "HANNFTrain"
-PetscErrorCode
-HANNFTrain(HANNF* hannf)
-{
-    PetscFunctionBegin;
-    // train
-    TaoSolve(hannf->tao);
-    // debug
-    HANNFDebug(hannf, kDebugLevel, "HANNFTrain\n");
     PetscFunctionReturn(0);
 }
 
