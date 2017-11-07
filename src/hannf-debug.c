@@ -53,6 +53,19 @@ HANNFDebug(HANNF* hannf, PetscInt level, const char *format, ...)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "HANNFDebugSynchronizedFSSDSD"
+PetscErrorCode
+HANNFDebugSynchronizedFSSDSD(HANNF* hannf, PetscInt level, const char* s1, const char* s2, PetscInt d1, const char* s3, PetscInt d2)
+{
+    PetscFunctionBegin;
+    if (hannf->debug >= level) {
+        PetscSynchronizedPrintf(hannf->comm, "%17s %-35s %18s %-8d %18s %-8d\n", " ", s1, s2, d1, s3, d2);
+        PetscSynchronizedFlush(hannf->comm, PETSC_STDOUT);
+    }
+    PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "HANNFFlag"
 PetscErrorCode
 HANNFFlag(PetscBool flag, char *message)

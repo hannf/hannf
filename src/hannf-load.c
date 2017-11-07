@@ -93,10 +93,7 @@ HANNFLoadInit(HANNF* hannf)
     HANNFDebug(hannf, kDebugLevel, FSSD, "HANNFLoadInit", "nproc:", nproc);
     HANNFDebug(hannf, kDebugLevel, FSSD, "HANNFLoadInit", "nmem_global:", nmem_global);
     // debug, local
-    if (hannf->debug >= kDebugLevel) {
-        PetscSynchronizedPrintf(comm, "%17s %-35s %18s %-8d %18s %-8d\n", " ", "HANNFLoadInit", "iproc:", iproc, "nmem_local:", nmem_local);
-        PetscSynchronizedFlush(comm, PETSC_STDOUT);
-    }
+    HANNFDebugSynchronizedFSSDSD(hannf, kDebugLevel, "HANNFLoadInit", "iproc:", iproc, "nmem_local:", nmem_local);
     // debug
     HANNFDebug(hannf, kDebugLevel, "HANNFLoadInit\n");
     PetscFunctionReturn(0);
